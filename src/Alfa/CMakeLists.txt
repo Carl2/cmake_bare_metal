@@ -30,4 +30,5 @@ PRIVATE
 project_options
 project_warnings
 project_sanitizer
+hal
 )

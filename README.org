@@ -1,0 +1,151 @@
+* Overview
+
+  This is a template for a /*CMake*/ repo might look.
+  It is not written in stone and for sure there are things that needs to be changed.
+  this is merely a template for everyone to see the idea.
+
+** Target selection
+   In this repository there are 3 different targets, representing different printheads.
+
+    - Alfa
+    - Beta
+    - Gamma
+
+   each of the target resides under src
+
+   #+HEADER: :eval never-export  :results output :wrap example :exports both
+   #+begin_src bash :dir "/home/calle/tmp/c++/PH/"
+   tree src -d -L 1
+   #+end_src
+
+   #+RESULTS:
+   #+begin_example
+   src
+   ├── Alfa
+   ├── Beta
+   ├── Gamma
+   └── include
+
+   4 directories
+   #+end_example
+
+   The include directory will be discussed in the next section.
+
+** Config selection
+   The config is based on different board platforms, for example using different configuration for a certain target.
+   By selecting /CONF_ONE/ the ~conf_one/config.hpp~ will be selected and selecting /CONF_TWO/ ~conf_two/config.hpp~
+   will be selected.
+   the tree structure used is:
+
+   #+HEADER: :eval never-export  :results output :wrap example :exports both
+   #+begin_src bash :dir "/home/calle/tmp/c++/PH/"
+     tree src/include
+   #+end_src
+
+   #+RESULTS:
+   #+begin_example
+   src/include
+   ├── common
+   │   └── common.hpp
+   ├── conf_one
+   │   └── config.hpp
+   └── conf_two
+       └── config.hpp
+
+   3 directories, 3 files
+   #+end_example
+
+   there is also a common, which are used by all the targets and has common functionality.
+
+
+
+
+** Using ccmake to configure target
+   The idea here is to have each and every *PH* in a seperate directory under src.
+   Which print head to be built is configured either using ccmake as in
+   [[file:doc/PH_WIP_ccmake.gif]]
+
+   Or using
+
+   #+HEADER: :eval never-export  :results output :wrap example :exports both
+   #+begin_src bash :dir "/home/calle/tmp/c++/PH/build/"
+   cmake -DFLAVOR=BETA -DCONFIG=CONF_ONE ..
+   #+end_src
+
+   #+RESULTS:
+   #+begin_example
+   -- Using Conf One
+   -- Beta Printhead
+   -- Configuring done
+   -- Generating done
+   -- Build files have been written to: /home/calle/tmp/c++/PH/build
+   #+end_example
+
+** libs
+   The libs are split up into different hardware components.
+   I dummy library /HAL/
+
+   #+HEADER: :eval never-export  :results output :wrap example :exports both
+   #+begin_src bash :dir "/home/calle/tmp/c++/PH/"
+   tree libs
+   #+end_src
+
+   #+RESULTS:
+   #+begin_example
+   libs
+   ├── CMakeLists.txt
+   └── hal
+       ├── CMakeLists.txt
+       ├── hal.hpp
+       └── src
+           ├── native
+           │   └── hal.cpp
+           └── stm32
+               └── hal.cpp
+
+   4 directories, 5 files
+   #+end_example
+
+   The idea is that it should be possible to build for multiple boards and even natively and with different
+   configuration this should also be mirrored in the structure.
+
+
+** tests
+   The is a mirror of the mirrors the structure of the root directory software.
+   That means under the directory ~test~ there will be a ~src/(Alfa|Beta|Gamma)~ ..
+
+   #+HEADER: :eval never-export  :results output :wrap example :exports both
+   #+begin_src bash :dir "/home/calle/tmp/c++/PH/"
+     tree tests
+   #+end_src
+
+   #+RESULTS:
+   #+begin_example
+   tests
+   ├── CMakeLists.txt
+   ├── libs
+   │   ├── CMakeLists.txt
+   │   └── hal
+   │       ├── CMakeLists.txt
+   │       └── test_hal.cpp
+   └── src
+       ├── Alfa
+       │   ├── CMakeLists.txt
+       │   └── test_Alfa.cpp
+       ├── Beta
+       │   ├── #CMakeLists.txt#
+       │   ├── CMakeLists.txt
+       │   └── test_Beta.cpp
+       ├── CMakeLists.txt
+       ├── Gamma
+       │   ├── #CMakeLists.txt#
+       │   ├── CMakeLists.txt
+       │   └── test_Gamma.cpp
+       └── PH_test.cpp
+
+   6 directories, 14 files
+   #+end_example
+
+   Here is an example of execution
+
+   [[file:doc/make_test.gif]]

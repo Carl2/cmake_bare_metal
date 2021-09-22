@@ -40,6 +40,7 @@ include_directories(
 include
 )
 
+add_subdirectory(libs)
 add_subdirectory(src)
 
 enable_testing()
