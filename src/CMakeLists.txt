@@ -1,0 +1,21 @@
+include_directories(include/common)
+if(CONFIG STREQUAL "CONF_ONE")
+  message(STATUS "Using Conf One")
+  include_directories("include/conf_one")
+else()
+    message(STATUS "Using Conf Two")
+  include_directories("include/conf_two")
+endif()
+
+
+
+if(FLAVOR STREQUAL "ALFA")
+  message(STATUS "Alfa Printhead")
+  add_subdirectory(Alfa)
+elseif(FLAVOR STREQUAL "BETA")
+  message(STATUS "Beta Printhead")
+  add_subdirectory(Beta)
+elseif( FLAVOR STREQUAL "GAMMA")
+  message(STATUS "Gamma Printhead")
+  add_subdirectory(Gamma)
+endif()
