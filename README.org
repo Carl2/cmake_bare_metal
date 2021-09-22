@@ -18,7 +18,6 @@
    tree src -d -L 1
    #+end_src
 
-   #+RESULTS:
    #+begin_example
    src
    ├── Alfa
