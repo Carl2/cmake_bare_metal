@@ -1,0 +1,521 @@
+:PROPERTIES:
+:ID:       9c01511b-1ff0-4a01-9438-a355c6313035
+:END:
+#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-bigblow.setup
+#+OPTIONS: broken-links:t
+#+author: calle
+#+title: printhead vision
+#+filetags: printhead vision doc
+
+* Overview printhead visison
+  In this paper I want to give an overview of the /printhead/ vision
+  that I see together with tools and a crude architecture. Its by no
+  means the complete story, and as mentioned before its crude. But I
+  think this vision has some important corner stones that will enhance
+  the /PH/ in the future and make it "future safe". By that I mean it
+  will make it possible to switch different parts of the
+  software/hardware without having to start start from scratch.
+
+
+** Build system
+   The current build system is building on ~make~ files, the problem
+   with make files are that they are complex and stupid, maintaining
+   ~makefiles~ is a hassle that one can spend hours and hours on, and
+   it gets even worse when x-compiling gets into the picture.
+
+   A make file is basically a recipe how to stir the different part of
+   the cooking into a pot (executable), and as we all know when
+   reading recipes there are plenty that is missing I.e where do I
+   find the stuff in different kitchens, what tools do I use, can I
+   make the cake with less sugar. That's what /cmake/ is doing, it sets
+   up the kitchen accordingly so that the recipe can be made exactly
+   the same way, but in a different kitchens, and with different
+   flavors and with new and better tools. It can also switch out the
+   recipe reader(make), with something else i.e /Ninja/.  It acts as
+   the servant that hands you the tools disregarding on which system
+   you are running, and at the same time gives you the opportunity to
+   use many new tools.
+
+   /CMake/ is also much easier to understand and because of that it
+   has become immensely popular. There are of course other build
+   system, which are equally or even better than /CMake/ (I.e bazel,
+   Meson, Scons), but the popularity of cmake has built up a  knowledge
+   base and documentation vastly extending any other build system.
+
+   /CMake/ source code structure also makes it easier to maintain a software
+   architectural structure.
+
+** Architectuaral structure
+   Today all different flavors of printheads resides in a different
+   repository. This makes it impossible to share code between the
+   printheads in an efficient way. Any change in one repository needs
+   to be copied to the other repositories.  In my visison I want to
+   share all code that is shareable. No code should be written twice.
+   The copy-paste approach is not good enough, one should strive to
+   make each line , and each function/method as unique as possible.
+   To do that one needs to use abstraction-layers. This is a great way
+   of hiding the working details of a subsystem allowing sepearation
+   of concerns and platform indepenendence. In the sense of the
+   /Printheads/ as time goes, there might be changes to the hardware
+   platform. Today the /*stm32f103T8*/ is used, but the demands and
+   requirements on the printheads hardware might change. A change in
+   hardware should only be reflected in the lowest part of the
+   abstraction layers (and cofiguration) and not the entire source code.
+
+   #+begin_src artist
+     +-----------------------------------------------------------+
+     |                                                           |
+     |       Specific Printhead source code                      |
+     |                                                           |
+     |                                                           |
+     +-----------------+-------------------+---------------------+
+     |                 |                   |                     |
+     |  Heater         |       LED         |    Temperature      | Subsystem
+     |                 |                   |     Reading         |
+     +-----------------+-------------------+------------+--------+
+     |                                                  |        |
+     |     Hardware Abstraction Layer                   | Config | Hardware (ports,reg)
+     +--------------------------------------------------+--------+
+   #+end_src
+
+   This also makes it possible to swich the /HAL/ to a /*native*/
+   layer and perform tests on the sofware locally. Which takes us to the next section.
+
+
+** Software Testability
+   Today's /Printheads/ do not have any unit-testing what so ever.  In
+   my vision all code written needs to be tested .  There is always
+   going to be requirement misunderstandings, bugs, and conflicts in
+   software due to the nature of software and its abstract-complexity.
+   But problems can be mitigated by using testing. One key concept to
+   testing is the "Test Pyramid"
+
+   #+begin_src artist
+                               /\                             ^
+                             -/  \-   *System test            |  More integration
+                           -/      \-                         |
+                         -/    *     \-                       |
+                       ------------------                     |
+                     -/   Integration    \-                   |
+                   -/       Testing        \-                 |
+                 ------------------------------               |
+               -/                              \-             |
+             -/                                  \-           |
+           -/                                      \-         |
+         -/             Unit testing                 \-       | More isolation
+       -/                                              \-     |
+     -----------------------------------------------------    v
+
+     <--------------------------------------------------->
+                    % of time spent
+   #+end_src
+
+   As seen in this pyramid the area represent time in which one should
+   add the most effort into. In this pyramid we can see that /*Unit
+   testing*/ has by far the greatest area, which means that most time
+   should be spent here. The reason for this is that the further up
+   that you find a bug, the greater the effort will be to find the
+   problem and a solution that doesn't break other things. If
+   developers are spending time creating /unit tests/ the greater the
+   understanding of the system in whole and the requirement. Unit tests
+   also serves as for documentation. Any new developer that gets a
+   task, can see different part of the system and how they interact by
+   checking the unit tests. Unit tests should be done on the local
+   machine (naively or in a emulator but on the dev machine) so that
+   when a fix is done, he/she can run the unit test framework and see that
+   the changes/fixes doesn't break any other part of the system.
+
+   With this concept we obviously touched on the part above of the /*HAL*/.
+   The build system needs to be able to exchange the HAL to a native stub HAL.
+
+** All printheads same repo
+   To go further down my vision we need some architectural way of
+   exchanging the HAL/subsystem.  Using /CMake/ we can have build
+   options as part of build system. One of these options which are
+   already implemented in the cmake the "build type" (Debug, Release,
+   RelWithDebInfo...) these specify what flags the compiler is using when
+   compiling, these are options that can be set during generation of
+   build scripts. But its possible to add other options. My vision is to add
+   options depending on the Printhead type. So lets imagine there are
+   three types of Printheads (Alfa,Beta,Gamma). They all have the
+   common code HAL, and subsystem. But the source code and
+   functionality is different. By specifying what type (flavor) of
+   printhead we are using the build system will build different
+   target, but not only that. It will also include the right
+   configuration.  The configuration is for example the IO port for
+   LED, and other board specific configuration.
+
+   This is kind of hard to explain in words , better to show it as a
+   example.
+
+   [[https://github.com/CELLINKAB/PH_WIP][Printhead repo example]]
+
+
+** CMSIS - Common Microcontroller Software Interface Standard
+   The /*CMSIS*/ is a vendor-independent abstraction layer for
+   microcontrollers that are based on Arm Cortex processors.  This
+   gives the abstraction layer based on the /cortex/ board (see [[*Architectuaral
+    structure][Abstraction layer]]).
+   This is the lowest level and its provided to us already.
+   The current version of /CMSIS/ which is used on the
+   /printheads/ is /v3.5.0/ that was released 2011-03-11, that means
+   its over 10 years old without updates. The now current version
+   which is available is /v5.8.0/ and is completely different. Alot have changed in 10 years.
+   The abstraction layers has been improved, and the code has been fixed
+   to the better. My vision (already done) is to use a new /CMSIS/
+   version, one benefit with using new CMSIS is that /*stm32CubeIde*/
+   which is an ide based on eclipse works straight out of the box.
+   That means we get alot for free. No need lookup every register to
+   set the specific clocks and dividers to get the functionality we
+   want. It helps setting up ports and generate code for initialization.
+   And foremost, any new developer will be familiar with the /ide/
+   and our product right out of the box (though with some hands on using cmake instead).
+
+   I don't see why we should stick to something old , when we can
+   get so much for free.
+
+** Language
+   Every language has its pros and cons, trying to decide a language
+   can be both hard and painful and many times it includes personal
+   preferences. I've been working with many different languages over
+   the years and many of them are similar in many ways.  Some
+   language are better at a specific problem other are more generic
+   and try to solve a larger problem but with the drawbacks of not
+   being specific enough. Today, /Cellink/ uses /*C*/ for development on
+   printheads and for many years this has been about the only option
+   (disregarding assembler) for microcontroller, this due to the fact
+   that there were no compilers supporting the hardware. But time has
+   changed, though /*C*/ has not..  Fundamentally /*C*/ trusts that
+   the user is doing the right thing, that trust is also its
+   drawback. Even the most experienced programmer can't have every
+   state mapped while programming. That means C as a language is
+   flawed by the human inability and its complicated nature to be
+   analyzed statically.  On the other hand, going to a safety-critical
+   solution, /*Ada*/ is the choice of language for many industries
+   like military, space and medical. I don't have much knowledge of
+   Ada as language, and I guess that is one of its drawbacks too,
+   there aren't many programmers that actually dealt with Ada on a
+   microcontroller, and the fact that the overhead to program Ada is
+   probably (as mentioned not very familiar with Ada) quite
+   extensive. Ok, so we stated the some kind of Axis where we have
+   Languages like Assembler and C at the left-side hard to statically
+   analyze, and on the other side we have specialized safety-critical solution
+
+
+   #+begin_src artist
+
+            C-language
+       <----|-------------------------------------------------------------->
+     Assembler                                                             Ada
+
+
+   #+end_src
+
+   So what makes /*C*/ less safe then for example /*Ada*/? One of the
+   key functionality in a safty critical system is the type-safty.
+   Not being able to perform dagerous conversion between types.
+   Meaning you can't assign a 64 bit variable to a 32 bit variable
+
+   #+begin_src example
+   int64 x = ........................;
+   int32 y = x
+   #+end_src
+
+   That enforcement can be checked statically during compile time, or
+   even runtime. But being a type-safe language is fundemental to
+   being a safe language.
+
+    - C :: Has somewhat limited type-safty, due to the promisocous use
+      of pointers, but some compile warnings can be emitted.
+    - Ada :: Want allow pointers, no implicit conversion..
+
+   So from one end to the other, none or both of these languages are
+   suitable to work in an microcontroller environment depending on the
+   situation.  Then we have /*java*/ not particularly suitable for a
+   microcontrollers, but the safty is somewhere in between. One issue
+   that needs to be considered is the fact that CMSIS which was
+   discussed earlier is written entirely in C.  There is a good reason
+   why a public library is written in C.  Many other languages are
+   using name-mangling, its a technique used to solve various problems
+   caused by the need to resolve unique names for programming
+   enitites. The reason why /*C*/ is particularly good for writing
+   libraries is that the mangling is done (informally agreed on
+   specification) in the way that other languages may use them.  That
+   means we can call a c-function from e.g c++,pascal,Ada and many
+   other.  But c++ name mangling is somewhat more complicated due to
+   namespaces and classes and especially since it differs between compilers.
+
+   Lets try something
+
+   #+NAME: main
+   #+begin_src c :exports none
+
+
+     int myFunction(int x)
+     {
+       return x;
+     }
+
+     int main()
+     {
+       myFunction(2);
+       return 0;
+     }
+
+   #+end_src
+
+
+   #+HEADER: :eval never-export  :results output :wrap example :exports both
+   #+begin_src bash :dir "/tmp" :noweb yes
+
+
+     cat << EOF > main.c
+      <<main>>
+     EOF
+
+     gcc main.c -o exec
+
+     nm exec | grep myFunction | awk '{print $3}'
+   #+end_src
+
+   #+RESULTS:
+   #+begin_example
+   myFunction
+   #+end_example
+
+   Doing the same thing in c++ will result in
+   #+NAME: myFunc-cpp
+   #+begin_src c++ :exports none
+     int myFunction(int x)
+     {
+         return x;
+     }
+
+     int main()
+     {
+         myFunction(2);
+         return 0;
+     }
+
+   #+end_src
+
+
+   #+HEADER: :eval never-export  :results output :wrap example :exports both
+   #+begin_src bash :dir "/tmp" :noweb yes
+
+
+     cat << EOF > main.cpp
+      <<myFunc-cpp>>
+     EOF
+
+     g++ main.c -o exec.gcc
+
+     var_gcc=$(nm exec.gcc | grep myFunction | awk '{print $3}')
+     echo ${var_gcc}
+     c++filt -n ${var_gcc}
+   #+end_src
+
+   #+RESULTS:
+   #+begin_example
+   _Z10myFunctioni
+   myFunction(int)
+   #+end_example
+
+   One benefit of doing this mangling for c++ is that every function
+   can have the same name but different arguments,which produces
+   different naming (mangling). This is what they call function
+   overloading. Its just a trick adding the function argument types
+   into the name.  Anyhow, this is also the reason why /*c++*/
+   shouln't be used a library since the mangling rules specification
+   are not formally standardized, or when using c++ the interface
+   functions needs to be declared with the keyword/*extern*/ which
+   would omit the name mangling.
+
+   #+NAME: extern-c
+   #+begin_src cpp
+
+     extern "C" int myFunction(int x)
+         {
+             return x;
+         }
+
+
+     int main()
+     {
+         myFunction(2);
+         return 0;
+     }
+
+   #+end_src
+
+
+   #+HEADER: :eval never-export  :results output :wrap example :exports both :noweb yes
+   #+begin_src bash :dir "/tmp"
+     cat << EOF > extern.cpp
+      <<extern-c>>
+     EOF
+
+     g++ extern.cpp -o extern.gcc
+
+          var_gcc=$(nm  extern.gcc | grep myFunction | awk '{print $3}')
+          echo ${var_gcc}
+          c++filt -n ${var_gcc}
+   #+end_src
+
+   #+RESULTS:
+   #+begin_example
+   myFunction
+   myFunction
+   #+end_example
+
+   Voilá. It now uses the c-naming.
+
+   So where on the Axis does /c++/ fit?
+   This is of course an interpretation, but I would put it somewhere
+   in the middle. The reasons are many.
+   But I would add some:
+
+   - Pointer arithmetics can be avoided , which means safer and more
+     predictable software.
+   - Polymorphism can be achieved through virtual functions and templates.
+   - Safer casting mechanism.
+   - Strongly typed enumerations
+   - Implicit conversation can be avoided through /explicit/ keyword.
+   - iterators instead of pointer arithmetics
+
+  C-language is rarely updated , once every 20 years or so. While
+  /c++/ is constanly updated with new features and optimizations.
+  many of the features that are implemented in /c++/ are in fact safer
+  ways to program without giving in on performance (zero overhead).
+
+  To give an example the c++ iterators has zero-overhead comparing to
+  the /C/ pointer arithmetic loops.
+
+  #+begin_quote
+  In general, C++ implementations obey the zero-overhead principle:
+  What you don’t use, you don’t pay for. And further: What you do use,
+  you couldn’t hand code any better.
+  #+end_quote
+
+  Lets see an example:
+
+  #+HEADER: :includes <stdint.h>   :main yes :flags  -Wall -Wextra
+  #+HEADER: :results table :exports both
+  #+begin_src C
+    int main()
+    {
+      const int test[5] = {10,20,30,40,50};
+      int i = 0;
+
+      for (i = 0; i < 5; ++i) {
+        printf("i=%d,%d\n",i, test[i]);
+      }
+      return 0;
+    }
+
+  #+end_src
+
+  #+RESULTS:
+  | i=0 | 10 |
+  | i=1 | 20 |
+  | i=2 | 30 |
+  | i=3 | 40 |
+  | i=4 | 50 |
+
+
+  And with c++.
+
+  #+HEADER: :includes <array> <iostream>   :main yes :flags -std=c++20 -Wall -Wextra
+  #+HEADER: :results table :exports both
+  #+begin_src cpp
+
+
+    int main()
+    {
+        constexpr std::array test{10,20,30,40,50};
+        int i=0;
+        for( const auto& item : test )
+        {
+            std::cout <<"i=" <<++i << " " << item << '\n';
+        }
+
+        return 0;
+    }
+
+  #+end_src
+
+  #+RESULTS:
+  | i=1 | 10 |
+  | i=2 | 20 |
+  | i=3 | 30 |
+  | i=4 | 40 |
+  | i=5 | 50 |
+
+  These codes snippets produce basically the same amount of code.  The
+  difference is the safty aspect, adding another number to the array
+  in C would mean we need to change the code in 3 places and doing
+  something wrong here would lead to a runtime error and possibly
+  crash. The c++ code only needs to be changed in one place (adding
+  the new number to the code).
+
+  I would put /C++/ somewhere in the middle of the axxis.
+
+  What about /*Rust*/? Some say *Rust* is what c++ should have been.
+  Since c++ is old and is built on top of /C/ you can use every
+  feature builtin in C in c++. The problem is then again that it is
+  possible to use c++ unsaftly because its inheritance with C.  Rust
+  on the other hand has that in mind , and you have to explicitly tell
+  the compiler calling a c function (being unsafe), and that the
+  developer know what he is doing.
+
+  Im not that knowlegeable with /Rust/ but it looks like they have
+  made it more robust in many ways compared to other similar languages.
+
+  #+begin_quote
+  Rust is innovative in terms of memory management. For example, it
+  does not allow null or dangling pointers. Due to its functionality,
+  Rust is commonly used to build device drivers, embedded systems,
+  games, and operating systems such as BlogOS, Redox, RustOS, Rux, and
+  Tock.  Rust code is arguably known best for its speed and ability to
+  debug code before testing.
+  #+end_quote
+
+  The somewhat rudimentary knowledge I have on rust, it places it self
+  far up in the right just below /Ada/. With that said , But as I
+  already mentioned. I have no further knowledge except for small test
+  programs (though I will take closer look at it in the near future).
+
+  There are however more considerations that needs to be taken into
+  account when choosing a language. One is what is the popularity.  By
+  popularity I mean how easy would it be to find help both onsite and
+  online, code examples and resources to further help with development.
+
+  According to [[https://www.tiobe.com/tiobe-index/][TIOBE]] C/C++ scores highest of the one mentioned
+  together with python and java. Python being an interpreted languages
+  and java both being both compiled and interpret, they fall out of
+  the question, whereas /Ada/ is failing due to its impopularity (less than 1%).
+
+  Another issue that needs to be consider is the tooling. What tools
+  does the language have to incoperate and statically check for errors
+  and bugs? Both C and C++ has been active a long time so there are
+  many tools available they also tend to have the most bugs which
+  means tools are needed. But for newer languages such as rust the
+  tooling is just started.
+
+
+
+** Conclusion
+   My take on this is that we should use /C++/.  The reason is that it
+   produces far less bugs and there are abundance of tools and
+   resources that help with development, as a developer I tend to
+   dislike having to debug code for a bug. It also enforces higher
+   type-safty than for example C, and better data hiding. States that
+   are not meaningful to the outside should not be visible. In my
+   point of view is C is just a glorified assmbler and it makes it to
+   easy to make misstakes . With c++ we have the oppurtunity to use
+   both c and c++ and external libraries. Further more the abstraction
+   of c++ makes the program more readable and shorter. It is also
+   actively updated (every 3 years). /C++/ uses encapsulation which
+   binds data and functions together which keeps the data safe from
+   outside interference. Further more has the new concept of lambda
+   programming made it possible to use functional way of programming.
