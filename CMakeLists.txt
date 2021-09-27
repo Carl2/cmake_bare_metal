@@ -26,7 +26,7 @@ set_property(CACHE CONF_DIR PROPERTY STRINGS "/src/black_pill/Inc" "/src/Alfa/In
 
 
 # Link Time Optimization (LTO)
-#include("cmake/StandardProjectSettings.cmake")
+include("cmake/StandardProjectSettings.cmake")
 
 # Compiler warnings
 #include("cmake/CompilerWarnings.cmake")

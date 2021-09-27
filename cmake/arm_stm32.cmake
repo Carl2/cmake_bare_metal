@@ -34,7 +34,6 @@ function(set_stm32_m4_compiler_options project_name)
 
     $<$<COMPILE_LANGUAGE:CXX>:-fmessage-length=0>
     $<$<COMPILE_LANGUAGE:C>:-fmessage-length=0>
-
     ###########################################################################
     #                                  Debug                                  #
     ###########################################################################
