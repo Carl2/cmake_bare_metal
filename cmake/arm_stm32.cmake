@@ -105,32 +105,38 @@ endfunction()
 
 function(set_stm32_m4_linker_flags project_name)
 
-  # set(STM_LINK_FLAGS
-  #   -L${CMAKE_SOURCE_DIR}/config/mem
-  #   -TSTM32F103XB_FLASH.ld
-  #   #-Tsections.ld
-  #   #-Tlibs.ld
-  #   #-nostartfiles
-  #   -Xlinker
-  #   --gc-sections
-  #   -Wl,-Map=${CMAKE_CURRENT_BINARY_DIR}/${project_name}.map
-  #   --specs=nano.specs
-  #   )
-  #
-  #target_link_options(${project_name} INTERFACE ${STM_LINK_FLAGS}   )
+  set(STM_LINK_FLAGS
+
+    -L${CMAKE_SOURCE_DIR}/libs/conf/mem
+    -TSTM32F411RETX_FLASH.ld
+    -mcpu=cortex-m4
+    -mthumb
+    -Xlinker
+    --gc-sections
+    -Wl,-Map=${CMAKE_CURRENT_BINARY_DIR}/${project_name}.map
+    --specs=nano.specs
+    -Wl,--start-group
+    -lc
+    -lm
+    -lstdc++
+    -lsupc++
+    -Wl,--end-group
+    )
+
+  target_link_options(${project_name} INTERFACE ${STM_LINK_FLAGS}   )
 
   #arm-none-eabi-g++ -o "BlackPill_First.elf" @"objects.list"   -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
 
-  target_link_options(${project_name}
-    INTERFACE
-    -L${CMAKE_SOURCE_DIR}/libs/conf/mem
-    -TSTM32F411RETX_FLASH.ld
-    --specs=nano.specs
-    #-nostartfiles
-    -ffreestanding
-  #-flto
-  #-nostdlib
-  )
+  # target_link_options(${project_name}
+  #   INTERFACE
+  #   -L${CMAKE_SOURCE_DIR}/libs/conf/mem
+  #   -TSTM32F411RETX_FLASH.ld
+  #   --specs=nano.specs
+  #   #-nostartfiles
+  #   -ffreestanding
+  # #-flto
+  # #-nostdlib
+  # )
 
 endfunction()
 
