@@ -27,8 +27,12 @@ add_executable( PH ${SRC} )
 ###########
 target_link_libraries( PH
 PRIVATE
-project_options
-project_warnings
-project_sanitizer
+# project_options
+# project_warnings
+# project_sanitizer
 hal
+CMSIS
+compile_flags
+compile_definitions
+
 )
