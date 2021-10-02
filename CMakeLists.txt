@@ -15,8 +15,8 @@ add_library(linker_flags INTERFACE)
 set_stm32_m4_linker_flags(linker_flags)
 
 
-set(FLAVOR BLACK_PILL CACHE STRING "Flavor(PH) to use")
-set_property(CACHE FLAVOR PROPERTY STRINGS BLACK_PILL ALFA BETA GAMMA)
+set(FLAVOR STEPPER CACHE STRING "Flavor(PH) to use")
+set_property(CACHE FLAVOR PROPERTY STRINGS STEPPER BLACK_PILL ALFA BETA GAMMA)
 
 set(CONFIG CONF_ONE CACHE STRING "Config  to use")
 set_property(CACHE CONFIG PROPERTY STRINGS CONF_ONE CONF_TWO)
@@ -27,7 +27,8 @@ set_property(CACHE CONF_DIR PROPERTY STRINGS "/src/black_pill/Inc" "/src/Alfa/In
 
 # Link Time Optimization (LTO)
 include("cmake/StandardProjectSettings.cmake")
-
+include("cmake/MCU_selection.cmake")
+set_project_config( MCU m4 CONF "/src/black_pill/Inc")
 # Compiler warnings
 #include("cmake/CompilerWarnings.cmake")
 #include("cmake/Sanitizers.cmake")

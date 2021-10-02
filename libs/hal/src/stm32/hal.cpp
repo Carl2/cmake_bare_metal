@@ -1,12 +1,12 @@
 #include "hal.hpp"
-#include <iostream>
+//#include <iostream>
 
 namespace HAL
 {
 
 void blink()
 {
-    std::cout << "Blink TARGET" << '\n';
+    // std::cout << "Blink TARGET" << '\n';
 }
 
 }  // namespace HAL
