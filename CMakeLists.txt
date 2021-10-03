@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 include(cmake/arm-none-eabi-toolchain.cmake)
-
+include(CMakeDependentOption)
 project ( PH C CXX ASM )
 
 include(cmake/arm_stm32.cmake)
@@ -15,6 +15,8 @@ add_library(linker_flags INTERFACE)
 set_stm32_m4_linker_flags(linker_flags)
 
 
+
+
 set(FLAVOR STEPPER CACHE STRING "Flavor(PH) to use")
 set_property(CACHE FLAVOR PROPERTY STRINGS STEPPER BLACK_PILL ALFA BETA GAMMA)
 
@@ -25,10 +27,12 @@ set(CONF_DIR "src/black_pill/Inc" CACHE STRING "Configure directory")
 set_property(CACHE CONF_DIR PROPERTY STRINGS "/src/black_pill/Inc" "/src/Alfa/Inc")
 
 
+
+
 # Link Time Optimization (LTO)
 include("cmake/StandardProjectSettings.cmake")
 include("cmake/MCU_selection.cmake")
-set_project_config( MCU m4 CONF "/src/black_pill/Inc")
+set_project_config( MCU m4 CONF ${CONF_DIR})
 # Compiler warnings
 #include("cmake/CompilerWarnings.cmake")
 #include("cmake/Sanitizers.cmake")

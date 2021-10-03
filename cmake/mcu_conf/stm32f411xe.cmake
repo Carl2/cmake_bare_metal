@@ -1,0 +1,4 @@
+set(MCU_TYPE "m4")
+set(MCU_LABEL "STM32F411xE")
+set(MCU_FLOAT TRUE)
+set(MCU_FLOAT fpv5-sp-d16)

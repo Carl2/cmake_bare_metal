@@ -13,7 +13,21 @@ function(set_project_config)
                           "${multiValueArgs}" ${ARGN} )
 
 
-  message(STATUS "Now ${PRJ_MCU} ")
+  message(STATUS "Now ${PRJ_MCU} conf ${PRJ_CONF} ")
+
+
+  file(GLOB prj_config_files
+    "${CMAKE_SOURCE_DIR}/cmake/mcu_conf/*.cmake"
+    )
+
+  message(STATUS "Configure files to use: ${prj_config_files}")
+  list(GET prj_config_files 0 MCU_CONF_ONE)
+
+  set(MCU_CONFIG ${MCU_CONF_ONE} CACHE STRING "Mcu config")
+  set_property(CACHE MCU_CONFIG PROPERTY STRINGS ${prj_config_files} )
+
+
+
 
 
 endfunction(set_project_config )
