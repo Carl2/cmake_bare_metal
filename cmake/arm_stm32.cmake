@@ -24,13 +24,13 @@ function(set_stm32_m4_compiler_options project_name)
 
   target_compile_options(${project_name}
     INTERFACE
-    $<$<COMPILE_LANGUAGE:CXX>:-mcpu=cortex-m4>
-    $<$<COMPILE_LANGUAGE:C>:-mcpu=cortex-m4>
-    $<$<COMPILE_LANGUAGE:ASM>:-mcpu=cortex-m4>
+    $<$<COMPILE_LANGUAGE:CXX>:-mcpu=${MCU_COMPILER_TYPE}>
+    $<$<COMPILE_LANGUAGE:C>:-mcpu=${MCU_COMPILER_TYPE}>
+    $<$<COMPILE_LANGUAGE:ASM>:-mcpu=${MCU_COMPILER_TYPE}>
 
-    $<$<COMPILE_LANGUAGE:CXX>:-mthumb>
-    $<$<COMPILE_LANGUAGE:C>:-mthumb>
-    $<$<COMPILE_LANGUAGE:ASM>:-mthumb>
+    $<$<COMPILE_LANGUAGE:CXX>:${MCU_COMPILER_INST_SET}>
+    $<$<COMPILE_LANGUAGE:C>:${MCU_COMPILER_INST_SET}>
+    $<$<COMPILE_LANGUAGE:ASM>:${MCU_COMPILER_INST_SET}>
 
     $<$<COMPILE_LANGUAGE:CXX>:-fmessage-length=0>
     $<$<COMPILE_LANGUAGE:C>:-fmessage-length=0>
@@ -59,17 +59,33 @@ function(set_stm32_m4_compiler_options project_name)
     $<$<COMPILE_LANGUAGE:C>:-Wextra>
   )
 
+#TODO: That didn't work as expected.
+if(MCU_FLOAT)
+    message(STATUS "FPU supported")
+    target_compile_options(${project_name}
+      INTERFACE
+      $<$<COMPILE_LANGUAGE:CXX>:-mfloat-abi=hard>
+      $<$<COMPILE_LANGUAGE:CXX>:-mfpu=${MCU_COMPILER_FPU_DEV}>
+      )
+  else()
+    target_compile_options(${project_name}
+      INTERFACE
+      $<$<COMPILE_LANGUAGE:CXX>:-mfloat-abi=soft>
+      )
+endif(MCU_FLOAT)
 
 
   #############################################################################
   #                         Flags dependent on language                       #
   #############################################################################
   target_compile_options(${project_name} INTERFACE
+    $<BOOL:MCU_FLOAT>:-mfpu=${MCU_COMPILER_FPU_DEV}>
+
     $<$<COMPILE_LANGUAGE:CXX>:-std=c++17>
     $<$<COMPILE_LANGUAGE:CXX>:-Wextra>
     $<$<COMPILE_LANGUAGE:CXX>:-Wall>
-    $<$<COMPILE_LANGUAGE:CXX>:-mfpu=fpv4-sp-d16>
-    $<$<COMPILE_LANGUAGE:CXX>:-mfloat-abi=hard>
+    #$<$<COMPILE_LANGUAGE:CXX>:-mfpu=fpv4-sp-d16>
+    #$<$<COMPILE_LANGUAGE:CXX>:-mfloat-abi=hard>
     $<$<COMPILE_LANGUAGE:CXX>:-pedantic-errors>
     $<$<COMPILE_LANGUAGE:C>:-Wall>
     $<$<COMPILE_LANGUAGE:C>:-Wextra>
@@ -88,10 +104,10 @@ function(set_stm32_m4_compiler_definition project_name)
     $<$<COMPILE_LANGUAGE:C>:DEBUG>
     $<$<COMPILE_LANGUAGE:CXX>:USE_FULL_ASSERT>
     $<$<COMPILE_LANGUAGE:C>:USE_FULL_ASSERT>
-    $<$<COMPILE_LANGUAGE:CXX>:STM32F411xE>
-    $<$<COMPILE_LANGUAGE:C>:STM32F411xE>
-    $<$<COMPILE_LANGUAGE:CXX>:USE_HAL_DRIVER>
-    $<$<COMPILE_LANGUAGE:C>:USE_HAL_DRIVER>
+    $<$<COMPILE_LANGUAGE:CXX>:${MCU_DEF_MCU}>
+    $<$<COMPILE_LANGUAGE:C>:${MCU_DEF_MCU}>
+    $<$<COMPILE_LANGUAGE:CXX>:${USE_HAL_DRIVER}>
+    $<$<COMPILE_LANGUAGE:C>:${USE_HAL_DRIVER}>
     # $<$<COMPILE_LANGUAGE:CXX>:STM32F10X_MD>
     # $<$<COMPILE_LANGUAGE:C>:STM32F10X_MD>
     #$<$<COMPILE_LANGUAGE:CXX>:HSE_VALUE=16000000>

@@ -7,6 +7,13 @@ include(cmake/arm_stm32.cmake)
 #include(cmake/standard_prj_settings.cmake)
 #TODO: Now im just going to use the M4...
 
+
+include("cmake/MCU_selection.cmake")
+set_project_config( MCU m4 CONF ${CONF_DIR})
+message(STATUS "APA ${MCU_CONFIG}")
+include(${MCU_CONFIG})
+
+
 add_library(compile_flags INTERFACE)
 set_stm32_m4_compiler_options(compile_flags)
 add_library(compile_definitions INTERFACE)
@@ -17,8 +24,8 @@ set_stm32_m4_linker_flags(linker_flags)
 
 
 
-set(FLAVOR STEPPER CACHE STRING "Flavor(PH) to use")
-set_property(CACHE FLAVOR PROPERTY STRINGS STEPPER BLACK_PILL ALFA BETA GAMMA)
+# set(FLAVOR STEPPER CACHE STRING "Flavor(PH) to use")
+# set_property(CACHE FLAVOR PROPERTY STRINGS STEPPER BLACK_PILL ALFA BETA GAMMA)
 
 set(CONFIG CONF_ONE CACHE STRING "Config  to use")
 set_property(CACHE CONFIG PROPERTY STRINGS CONF_ONE CONF_TWO)
@@ -31,8 +38,6 @@ set_property(CACHE CONF_DIR PROPERTY STRINGS "/src/black_pill/Inc" "/src/Alfa/In
 
 # Link Time Optimization (LTO)
 include("cmake/StandardProjectSettings.cmake")
-include("cmake/MCU_selection.cmake")
-set_project_config( MCU m4 CONF ${CONF_DIR})
 # Compiler warnings
 #include("cmake/CompilerWarnings.cmake")
 #include("cmake/Sanitizers.cmake")
