@@ -10,7 +10,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS On)
 
 ###############################################################################
 #                                 M4 compiler flags
-#arm-none-eabi-g++ -o "BlackPill_First.elf" @"objects.list"   \
+# arm-none-eabi-g++ -o "BlackPill_First.elf" @"objects.list"   \
 # -mcpu=cortex-m4 -T"/home/calle/STM32CubeIDE/workspace_1.7.0/BlackPill_First/STM32F411RETX_FLASH.ld" \
 # --specs=nosys.specs -Wl,-Map="BlackPill_First.map"
 # -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group \
@@ -59,18 +59,23 @@ function(set_stm32_m4_compiler_options project_name)
     $<$<COMPILE_LANGUAGE:C>:-Wextra>
   )
 
-#TODO: That didn't work as expected.
 if(MCU_FLOAT)
     message(STATUS "FPU supported")
     target_compile_options(${project_name}
       INTERFACE
       $<$<COMPILE_LANGUAGE:CXX>:-mfloat-abi=hard>
       $<$<COMPILE_LANGUAGE:CXX>:-mfpu=${MCU_COMPILER_FPU_DEV}>
+      $<$<COMPILE_LANGUAGE:C>:-mfloat-abi=hard>
+      $<$<COMPILE_LANGUAGE:C>:-mfpu=${MCU_COMPILER_FPU_DEV}>
+      $<$<COMPILE_LANGUAGE:ASM>:-mfloat-abi=hard>
+      $<$<COMPILE_LANGUAGE:ASM>:-mfpu=${MCU_COMPILER_FPU_DEV}>
       )
   else()
     target_compile_options(${project_name}
       INTERFACE
       $<$<COMPILE_LANGUAGE:CXX>:-mfloat-abi=soft>
+      $<$<COMPILE_LANGUAGE:C>:-mfloat-abi=soft>
+      $<$<COMPILE_LANGUAGE:ASM>:-mfloat-abi=soft>
       )
 endif(MCU_FLOAT)
 
@@ -79,25 +84,19 @@ endif(MCU_FLOAT)
   #                         Flags dependent on language                       #
   #############################################################################
   target_compile_options(${project_name} INTERFACE
-    $<BOOL:MCU_FLOAT>:-mfpu=${MCU_COMPILER_FPU_DEV}>
 
     $<$<COMPILE_LANGUAGE:CXX>:-std=c++17>
     $<$<COMPILE_LANGUAGE:CXX>:-Wextra>
     $<$<COMPILE_LANGUAGE:CXX>:-Wall>
-    #$<$<COMPILE_LANGUAGE:CXX>:-mfpu=fpv4-sp-d16>
-    #$<$<COMPILE_LANGUAGE:CXX>:-mfloat-abi=hard>
     $<$<COMPILE_LANGUAGE:CXX>:-pedantic-errors>
     $<$<COMPILE_LANGUAGE:C>:-Wall>
     $<$<COMPILE_LANGUAGE:C>:-Wextra>
     )
-  #target_compile_options(${project_name} INTERFACE )
-  #add_compile_options($<$<COMPILE_LANGUAGE:CXX>:${WARNINGS}>)
 
 endfunction()
 
 
 function(set_stm32_m4_compiler_definition project_name)
-
   #STM32F411xE
   target_compile_definitions(${project_name} INTERFACE
     $<$<COMPILE_LANGUAGE:CXX>:DEBUG>
@@ -106,12 +105,8 @@ function(set_stm32_m4_compiler_definition project_name)
     $<$<COMPILE_LANGUAGE:C>:USE_FULL_ASSERT>
     $<$<COMPILE_LANGUAGE:CXX>:${MCU_DEF_MCU}>
     $<$<COMPILE_LANGUAGE:C>:${MCU_DEF_MCU}>
-    $<$<COMPILE_LANGUAGE:CXX>:${USE_HAL_DRIVER}>
-    $<$<COMPILE_LANGUAGE:C>:${USE_HAL_DRIVER}>
-    # $<$<COMPILE_LANGUAGE:CXX>:STM32F10X_MD>
-    # $<$<COMPILE_LANGUAGE:C>:STM32F10X_MD>
-    #$<$<COMPILE_LANGUAGE:CXX>:HSE_VALUE=16000000>
-    #$<$<COMPILE_LANGUAGE:C>:HSE_VALUE=16000000>
+    $<$<COMPILE_LANGUAGE:CXX>:${MCU_DEF_HAL_DRIVER}>
+    $<$<COMPILE_LANGUAGE:C>:${MCU_DEF_HAL_DRIVER}>
     )
 
 
@@ -120,38 +115,36 @@ endfunction()
 
 function(set_stm32_m4_linker_flags project_name)
 
-  set(STM_LINK_FLAGS
+  # Set if FPU is defined , then we need to add that to the linker.
+  if(MCU_FLOAT)
+    set(STM_LINK_FLAGS
+      -mfloat-abi=hard -mfpu=${MCU_COMPILER_FPU_DEV}
+      )
+  endif()
 
-    -L${CMAKE_SOURCE_DIR}/libs/conf/mem
-    -TSTM32F411RETX_FLASH.ld
-    -mcpu=cortex-m4
+
+
+  set(STM_LINK_FLAGS
+    ${STM_LINK_FLAGS}
+    -L${MCU_MEMORY_LAYOUT_DIR}
+    -T${MCU_MEMORY_LAYOUT_FILES}
+    -mcpu=${MCU_COMPILER_TYPE}
     -mthumb
     -Xlinker
-    --gc-sections
-    -Wl,-Map=${CMAKE_CURRENT_BINARY_DIR}/${project_name}.map
-    --specs=nano.specs
-    -Wl,--start-group
-    -lc
+    -Map=${MCU_LINKER_MAP_FILE}
+    -Wl,--gc-section
+    -specs=${MCU_LINKER_SPEC}
+    -Wl,--start-group # Searches for symbols several times in the libs
+    -lc               # betweek start/end group
     -lm
     -lstdc++
     -lsupc++
     -Wl,--end-group
+
     )
 
   target_link_options(${project_name} INTERFACE ${STM_LINK_FLAGS}   )
 
-  #arm-none-eabi-g++ -o "BlackPill_First.elf" @"objects.list"   -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
-
-  # target_link_options(${project_name}
-  #   INTERFACE
-  #   -L${CMAKE_SOURCE_DIR}/libs/conf/mem
-  #   -TSTM32F411RETX_FLASH.ld
-  #   --specs=nano.specs
-  #   #-nostartfiles
-  #   -ffreestanding
-  # #-flto
-  # #-nostdlib
-  # )
 
 endfunction()
 

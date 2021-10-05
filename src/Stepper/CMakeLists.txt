@@ -1,5 +1,5 @@
-add_library(startup OBJECT Startup/startup_stm32f411retx.s)
-set(TARGET_BIN "f401Stepper")
+add_library(startup OBJECT Startup/startup_stm32f401ccux.s)
+set(TARGET_BIN "Stepper")
 
 set(SRC
   Src/main.c
