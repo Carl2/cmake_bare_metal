@@ -1,3 +1,7 @@
+include(${CMAKE_SOURCE_DIR}/cmake/external_dep.cmake)
+#f4_device_support(DESTINATION "${CMAKE_SOURCE_DIR}/external/cmsis_device_f4" )
+f4_HAL_support(DESTINATION "${CMAKE_SOURCE_DIR}/external/" CONF_DIR "${CMAKE_SOURCE_DIR}/src/black_pill/Inc" )
+
 add_library(startup OBJECT Startup/startup_stm32f411retx.s)
 
 
@@ -17,16 +21,15 @@ set(SRC
 
 add_executable(${TARGET_BIN} ${SRC})
 
-target_include_directories(${TARGET_BIN} PRIVATE Inc)
+target_include_directories(${TARGET_BIN} PRIVATE Inc ${STM_DEVICE_SUPPORT_INCLUDE})
 
 target_link_libraries(${TARGET_BIN} PRIVATE
   #project_sanitizer
-  #  CMSIS
+  #CMSIS
   startup
   Stm32MCUSupport
   compile_flags
   compile_definitions
-
   )
 
 
