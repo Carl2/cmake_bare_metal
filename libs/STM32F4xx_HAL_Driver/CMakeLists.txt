@@ -220,7 +220,6 @@ target_link_libraries(${LIB_NAME} PUBLIC
   compile_flags
   compile_definitions
   linker_flags
-
   extra_conf
   #TODO: More to come
   )

@@ -10,7 +10,6 @@ include(cmake/arm_stm32.cmake)
 
 include("cmake/MCU_selection.cmake")
 set_project_config( MCU m4 CONF ${CONF_DIR})
-message(STATUS "APA ${MCU_CONFIG}")
 include(${MCU_CONFIG})
 
 
@@ -31,7 +30,7 @@ set(CONFIG CONF_ONE CACHE STRING "Config  to use")
 set_property(CACHE CONFIG PROPERTY STRINGS CONF_ONE CONF_TWO)
 
 set(CONF_DIR "src/black_pill/Inc" CACHE STRING "Configure directory")
-set_property(CACHE CONF_DIR PROPERTY STRINGS "/src/black_pill/Inc" "/src/Alfa/Inc")
+set_property(CACHE CONF_DIR PROPERTY STRINGS "/src/black_pill/Inc" "/src/Alfa/Inc" "/src/ph_disco/Inc")
 
 
 
@@ -63,9 +62,9 @@ include("cmake/StaticAnalyzers.cmake")
 
 
 
-include_directories(
-include
-)
+# include_directories(
+#   include
+# )
 
 add_subdirectory(libs)
 add_subdirectory(src)

@@ -1,11 +1,18 @@
+###############################################################################
+#                    Download and build the external CMSIS                    #
+###############################################################################
 include(${CMAKE_SOURCE_DIR}/cmake/external_dep.cmake)
-#f4_device_support(DESTINATION "${CMAKE_SOURCE_DIR}/external/cmsis_device_f4" )
-f4_HAL_support(DESTINATION "${CMAKE_SOURCE_DIR}/external/" CONF_DIR "${CMAKE_SOURCE_DIR}/src/black_pill/Inc" )
+f4_HAL_support(DESTINATION "${CMAKE_SOURCE_DIR}/external/" CONFIG_DIR "${CMAKE_SOURCE_DIR}/src/black_pill/Inc" )
 
+###############################################################################
+#                       Create the startup object (ASM)                       #
+###############################################################################
 add_library(startup OBJECT Startup/startup_stm32f411retx.s)
 
 
-
+###############################################################################
+#                            The actual execcutable                           #
+###############################################################################
 set(TARGET_BIN "BlackPill")
 
 set(SRC
@@ -21,13 +28,14 @@ set(SRC
 
 add_executable(${TARGET_BIN} ${SRC})
 
-target_include_directories(${TARGET_BIN} PRIVATE Inc ${STM_DEVICE_SUPPORT_INCLUDE})
+#target_include_directories(${TARGET_BIN} PRIVATE Inc ${STM_DEVICE_SUPPORT_INCLUDE})
 
 target_link_libraries(${TARGET_BIN} PRIVATE
   #project_sanitizer
   #CMSIS
   startup
-  Stm32MCUSupport
+  stm32F4_HAL_support_lib
+  #Stm32MCUSupport
   compile_flags
   compile_definitions
   )

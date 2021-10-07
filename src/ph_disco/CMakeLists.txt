@@ -2,43 +2,42 @@
 #                    Download and build the external CMSIS                    #
 ###############################################################################
 include(${CMAKE_SOURCE_DIR}/cmake/external_dep.cmake)
-f4_HAL_support(DESTINATION "${CMAKE_SOURCE_DIR}/external/" CONFIG_DIR "${CMAKE_SOURCE_DIR}/src/black_pill/Inc" )
-
+f1_HAL_support(DESTINATION "${CMAKE_SOURCE_DIR}/external" CONFIG_DIR "${CMAKE_SOURCE_DIR}/src/ph_disco/Inc" )
 
 ###############################################################################
 #                       Create the startup object (ASM)                       #
 ###############################################################################
-add_library(startup OBJECT Startup/startup_stm32f401ccux.s)
+add_library(startup OBJECT Startup/startup_stm32f103t8ux.s)
 
 
 ###############################################################################
 #                            The actual execcutable                           #
 ###############################################################################
-set(TARGET_BIN "Stepper")
+set(TARGET_BIN "ph_disco")
 
 set(SRC
   Src/main.c
-  #Startup/startup_stm32f411retx.s
-  Src/stm32f4xx_hal_msp.c
-  Src/stm32f4xx_it.c
-  Src/system_stm32f4xx.c
+  Src/stm32f1xx_it.c
+  Src/stm32f1xx_hal_msp.c
+  Src/system_stm32f1xx.c
   Src/syscalls.c
   Src/sysmem.c
+
 
   )
 
 add_executable(${TARGET_BIN} ${SRC})
 
-target_include_directories(${TARGET_BIN} PRIVATE Inc)
+target_include_directories(${TARGET_BIN} PRIVATE Inc )
 
 target_link_libraries(${TARGET_BIN} PRIVATE
   #project_sanitizer
-  #  CMSIS
+  #CMSIS
   startup
-  stm32F4_HAL_support_lib
+  stm32F1_HAL_support_lib
+  #Stm32MCUSupport
   compile_flags
   compile_definitions
-
   )
 
 
