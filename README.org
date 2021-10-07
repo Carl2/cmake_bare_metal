@@ -1,34 +1,185 @@
+#+OPTIONS: ^:nil
+#+AUTHOR: Calle Olsen
+:PROPERTIES:
+:PH-DIR:   /home/calle/git/PH_WIP
+:END:
+
+
 * Overview
 
-  This is a template for a /*CMake*/ repo might look.
-  It is not written in stone and for sure there are things that needs to be changed.
-  this is merely a template for everyone to see the idea.
+  This Repo is project using cmake to develop stm32fxx projects under
+  the same repo.  And thereby sharing commmon functionality. It is
+  based on the /STM32Cube/ which is downloaded during configure state when running *cmake*.
+
+  The idea was to use the output from [[https://www.st.com/en/development-tools/stm32cubeide.html][StmCubeIde]] to easy incoperate
+  the project into cmake.  This means that the easy configuration i.e
+  system clocks and peripherals can be made inside /StmCubeIde/ and
+  then copy the /Core/ functionality into this project.
+
+
+
+** Quick start build
+
+   Lets start to get going.
+   There are several ways of building but lets go for the terminal first.
+
+*** Terminal
+    Some configuration needs to be done in order for the system to
+    figure out what to use.
+     - CONF_DIR :: Where to find the configuration, this is needed
+       since there are dependencies from /Stm32CubeFxx/ library to see
+       what hal configuraion it is dependent on , in other words the
+       ~stm32f4xx_hal_conf.h~ for stm32f4. If one has used /StmCubeIde/
+       you should use the include directory in /Core/.
+     - FLAVOR :: This is the project. For this build we will use the
+       /BLACK_PILL/, there are 2 others that can be used /STEPPER,PH_DISCO/
+       They all depend on setting the other variables right (MCU_CONFIG,CONF_DIR).
+     - MCU_CONFIG :: This points to a file which sets some different
+       variables/flags during compile time. They are located in:
+
+     #+HEADER: :eval never-export  :results output :wrap example :exports both
+     #+begin_src bash :dir (org-entry-get nil "PH-DIR" t)
+       ls cmake/mcu_conf/*
+     #+end_src
+
+     #+RESULTS:
+     #+begin_example
+     cmake/mcu_conf/stm32f103xb.cmake
+     cmake/mcu_conf/stm32f401xc.cmake
+     cmake/mcu_conf/stm32f411xe.cmake
+     #+end_example
+
+     So lets try a build example, the configure step may take some time
+     (depending on you internet connection) since it will download the /Stm32Cube/ library.
+
+
+
+     #+caption: black_pill build
+     #+HEADER: :eval never-export  :results output :wrap example :exports both
+     #+begin_src bash :dir (org-entry-get nil "PH-DIR" t)
+       mkdir black_pill_build cd black_pill_build
+
+       cmake -DCONF_DIR=src/black_pill/Inc \
+             -DFLAVOR=BLACK_PILL \
+             -DMCU_CONFIG=/home/calle/git/PH_WIP/cmake/mcu_conf/stm32f411xe.cmake ..
+
+       make -j8
+     #+end_src
+
+     #+RESULTS:
+     #+begin_example
+     -- The ASM compiler identification is GNU
+     -- Found assembler: /usr/bin/arm-none-eabi-gcc
+     -- Detecting C compiler ABI info
+     -- Detecting C compiler ABI info - done
+     -- Check for working C compiler: /usr/bin/arm-none-eabi-gcc - skipped
+     -- Detecting CXX compiler ABI info
+     -- Detecting CXX compiler ABI info - done
+     -- Check for working CXX compiler: /usr/bin/arm-none-eabi-g++ - skipped
+     -- Now m4 conf src/black_pill/Inc
+     -- Configure files to use: /home/calle/git/PH_WIP/cmake/mcu_conf/stm32f103xb.cmake;/home/calle/git/PH_WIP/cmake/mcu_conf/stm32f401xc.cmake;/home/calle/git/PH_WIP/cmake/mcu_conf/stm32f411xe.cmake
+     -- Using /usr/bin/arm-none-eabi-g++ /usr/bin/arm-none-eabi-gcc
+     -- FPU supported
+     -- Setting build type to 'RelWithDebInfo' as none was specified.
+     -- No colored compiler diagnostic set for '' compiler.
+     -- Using Conf One
+     -- Black Pill is used
+     -- Creating target stm32F4_mcu_support_lib
+     -- Configuring done
+     -- Generating done
+     -- Build files have been written to: /home/calle/git/PH_WIP/black_pill_build
+     Scanning dependencies of target hal
+     Scanning dependencies of target startup
+     [  1%] Building CXX object libs/hal/CMakeFiles/hal.dir/src/stm32/hal.cpp.obj
+     [  2%] Building ASM object src/black_pill/CMakeFiles/startup.dir/Startup/startup_stm32f411retx.s.obj
+     [  2%] Built target startup
+     [  3%] Linking CXX static library libhal.a
+     [  3%] Built target hal
+     Scanning dependencies of target stm32F4_HAL_support_lib
+     [  4%] Building C object src/black_pill/CMakeFiles/stm32F4_HAL_support_lib.dir/__/__/external/STM32F4xx_HAL_DRIVER/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c.obj
+     [  5%] Building C object src/black_pill/CMakeFiles/stm32F4_HAL_support_lib.dir/__/__/external/STM32F4xx_HAL_DRIVER/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c.obj
+     .
+     .
+     .
+
+     [ 93%] Building C object src/black_pill/CMakeFiles/stm32F4_HAL_support_lib.dir/__/__/external/STM32F4xx_HAL_DRIVER/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_usb.c.obj
+     [ 93%] Built target stm32F4_HAL_support_lib
+     Scanning dependencies of target BlackPill
+     [ 95%] Building C object src/black_pill/CMakeFiles/BlackPill.dir/Src/main.c.obj
+     [ 95%] Building C object src/black_pill/CMakeFiles/BlackPill.dir/Src/stm32f4xx_it.c.obj
+     [ 97%] Building C object src/black_pill/CMakeFiles/BlackPill.dir/Src/system_stm32f4xx.c.obj
+     [ 97%] Building C object src/black_pill/CMakeFiles/BlackPill.dir/Src/sysmem.c.obj
+     [ 98%] Building C object src/black_pill/CMakeFiles/BlackPill.dir/Src/syscalls.c.obj
+     [ 99%] Building C object src/black_pill/CMakeFiles/BlackPill.dir/Src/stm32f4xx_hal_msp.c.obj
+     [100%] Linking C executable BlackPill
+     [100%] Built target BlackPill
+     #+end_example
+     [[file:doc/black_pill_configure.gif]]
+     [[file:doc/black_pill_build.gif]]
+     When the build is finished you should be able to find a working solution in
+
+     #+HEADER: :eval never-export  :results output :wrap example :exports both
+     #+begin_src bash :dir (org-entry-get nil "PH-DIR" t)
+       ls black_pill_build/src/black_pill/BlackPill*
+     #+end_src
+
+     #+RESULTS:
+     #+begin_example
+     black_pill_build/src/black_pill/BlackPill
+     black_pill_build/src/black_pill/BlackPill.hex
+     #+end_example
+
+     The same idea is used with the different project (/stepper,ph_disco/).
+
+
+*** Using ccmake
+    /ccmake/ is a tui (terminal user interface) that can be a bit
+    easier to work with, since you can see the actual
+    configurations. Though bare in mind that setting .i.e the
+    MCU_CONFIG and configure, leaves the /FLAVOR/ which means you need
+    to first update the /MCU_CONFIG/ then configure , then update the /FLAVOR/ the configure again.
+    and finally generate, and build. This is hard to explain without some pictures.
+    So here is a configuration/build of the /STEPPER/ (stm32f401).
+
+    [[file:doc/ccmake_stepper_conf.gif]]
+    [[file:doc/ccmake_stepper_build.gif]]
+
+
+
+
+
+
 
 ** Target selection
-   In this repository there are 3 different targets, representing different printheads.
+   In this repository there are 3 working stm32 targets.
 
-    - Alfa
-    - Beta
-    - Gamma
+    - Black_Pill
+    - Stepper
+    - PH_disco
 
    each of the target resides under src
 
    #+HEADER: :eval never-export  :results output :wrap example :exports both
-   #+begin_src bash :dir "/home/calle/tmp/c++/PH/"
+   #+begin_src bash :dir (org-entry-get nil "PH-DIR" t)
    tree src -d -L 1
    #+end_src
 
+   #+RESULTS:
    #+begin_example
    src
-   ├── Alfa
-   ├── Beta
-   ├── Gamma
-   └── include
+   ├── Alfa (x64, not used yet!)
+   ├── Beta (x64, not used yet!)
+   ├── black_pill (stm32f411)
+   ├── Gamma (x64,not used yet!)
+   ├── include (common include)
+   ├── ph_disco (stm32f103)
+   └── Stepper  (stm32f401)
 
-   4 directories
+   7 directories
    #+end_example
 
-   The include directory will be discussed in the next section.
+
+
 
 ** Config selection
    The config is based on different board platforms, for example using different configuration for a certain target.
@@ -57,94 +208,40 @@
    there is also a common, which are used by all the targets and has common functionality.
 
 
+* Add a new Project (from StmCubeIde)
+  The idea here is to use the good features of /StmCubeIde/ for
+  configuration i.e clock setup and pheriphereals configuration.  So
+  when all is done and you made sure that the project is working.  Its
+  time to add it to the project. Lets now consider that the MCU cmake
+  file (see MCU_CONFIG) is existing so we are using a already known MCU.
+  The first thing to do is to copy everything from the STMCubeIDE project core directory
+  to ~PH_WIP/src/<prj>~
+
+  Here is an example
+
+  #+HEADER: :eval never-export  :results output :wrap example :exports both
+  #+begin_src bash :dir "/tmp"
+
+    #Create a new project directory
+    mkdir ${HOME}/PH_WIP/src/MyPrj
+    # Copy all existing StmCubeIde file under Core
+    cp -r ${HOME}/STM32CubeIDE/WorkSpace/MyProject/Core \
+       ${HOME}/PH_WIP/src/MyPrj
+
+    # Copy an existing cmake file from a project with the same MCU
+    cp -r ${HOME}/PH_WIP/src/Stepper/CMakeLists.txt ${HOME}/PH_WIP/src/MyPrj
+
+    #Edit the file by setting a new target name..
+    sed -i 's/Stepper/MyPrj/g' CMakeLists.txt
+
+    # Now we need to edit the MCU_CONF file to add our project, that should tie the MyPrj
+    # to stm32f401 as a Flavor (see ccmake)
+    sed -i -e '/set_property/s/STEPPER/STEPPER MyPrj/' cmake/mcu_conf/stm32f401xc.cmake
+  #+end_src
+
+  That should be it (no guarantees though!).
 
 
-** Using ccmake to configure target
-   The idea here is to have each and every *PH* in a seperate directory under src.
-   Which print head to be built is configured either using ccmake as in
-   [[file:doc/PH_WIP_ccmake.gif]]
-
-   Or using
-
-   #+HEADER: :eval never-export  :results output :wrap example :exports both
-   #+begin_src bash :dir "/home/calle/tmp/c++/PH/build/"
-   cmake -DFLAVOR=BETA -DCONFIG=CONF_ONE ..
-   #+end_src
-
-
-   #+begin_example
-   -- Using Conf One
-   -- Beta Printhead
-   -- Configuring done
-   -- Generating done
-   -- Build files have been written to: /home/calle/tmp/c++/PH/build
-   #+end_example
-
-** libs
-   The libs are split up into different hardware components.
-   I dummy library /HAL/
-
-   #+HEADER: :eval never-export  :results output :wrap example :exports both
-   #+begin_src bash :dir "/home/calle/tmp/c++/PH/"
-   tree libs
-   #+end_src
-
-
-   #+begin_example
-   libs
-   ├── CMakeLists.txt
-   └── hal
-       ├── CMakeLists.txt
-       ├── hal.hpp
-       └── src
-           ├── native
-           │   └── hal.cpp
-           └── stm32
-               └── hal.cpp
-
-   4 directories, 5 files
-   #+end_example
-
-   The idea is that it should be possible to build for multiple boards and even natively and with different
-   configuration this should also be mirrored in the structure.
-
-
-** tests
-   The is a mirror of the mirrors the structure of the root directory software.
-   That means under the directory ~test~ there will be a ~src/(Alfa|Beta|Gamma)~ ..
-
-   #+HEADER: :eval never-export  :results output :wrap example :exports both
-   #+begin_src bash :dir "/home/calle/tmp/c++/PH/"
-     tree tests
-   #+end_src
-
-
-   #+begin_example
-   tests
-   ├── CMakeLists.txt
-   ├── libs
-   │   ├── CMakeLists.txt
-   │   └── hal
-   │       ├── CMakeLists.txt
-   │       └── test_hal.cpp
-   └── src
-       ├── Alfa
-       │   ├── CMakeLists.txt
-       │   └── test_Alfa.cpp
-       ├── Beta
-       │   ├── #CMakeLists.txt#
-       │   ├── CMakeLists.txt
-       │   └── test_Beta.cpp
-       ├── CMakeLists.txt
-       ├── Gamma
-       │   ├── #CMakeLists.txt#
-       │   ├── CMakeLists.txt
-       │   └── test_Gamma.cpp
-       └── PH_test.cpp
-
-   6 directories, 14 files
-   #+end_example
-
-   Here is an example of execution
-
-   [[file:doc/make_test.gif]]
+** TODO Adding a new MCU
+* Tests
+  Not implemented yet...
