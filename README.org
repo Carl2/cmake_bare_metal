@@ -260,7 +260,7 @@
     cp -r ${HOME}/PH_WIP/src/Stepper/CMakeLists.txt ${HOME}/PH_WIP/src/MyPrj
 
     #Edit the file by setting a new target name..
-    sed -i 's/Stepper/MyPrj/g' CMakeLists.txt
+    sed -i 's/Stepper/MyPrj/g' ${HOME}/PH_WIP/src/MyPrj/CMakeLists.txt
 
     # Now we need to edit the MCU_CONF file to add our project, that should tie the MyPrj
     # to stm32f401 as a Flavor (see ccmake)
