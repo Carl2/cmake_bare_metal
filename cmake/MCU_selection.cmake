@@ -17,10 +17,16 @@ function(set_project_config)
     "${CMAKE_SOURCE_DIR}/cmake/mcu_conf/*.cmake"
     )
 
-  message(STATUS "Configure files to use: ${prj_config_files}")
-  list(GET prj_config_files 0 MCU_CONF_ONE)
+  set(MCU_LIST "")
+  foreach(mcu_file IN LISTS prj_config_files )
+    string(REPLACE "${CMAKE_SOURCE_DIR}/cmake/mcu_conf/" "" mcu ${mcu_file})
+    #string(REGEX MATCH "${CMAKE_SOURCE_DIR}/cmake/mcu_conf/*.cmake" mcu ${mcu_file})
+    list(APPEND MCU_LIST ${mcu})
+  endforeach()
+
+  list(GET MCU_LIST 0 MCU_CONF_ONE)
 
   set(MCU_CONFIG ${MCU_CONF_ONE} CACHE STRING "Mcu config")
-  set_property(CACHE MCU_CONFIG PROPERTY STRINGS ${prj_config_files} )
+  set_property(CACHE MCU_CONFIG PROPERTY STRINGS ${MCU_LIST} )
 
 endfunction(set_project_config )

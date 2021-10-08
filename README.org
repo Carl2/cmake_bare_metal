@@ -61,7 +61,7 @@
 
        cmake -DCONF_DIR=src/black_pill/Inc \
              -DFLAVOR=BLACK_PILL \
-             -DMCU_CONFIG=/home/calle/git/PH_WIP/cmake/mcu_conf/stm32f411xe.cmake ..
+             -DMCU_CONFIG=stm32f411xe.cmake ..
 
        make -j8
      #+end_src
@@ -238,6 +238,7 @@
     # to stm32f401 as a Flavor (see ccmake)
     sed -i -e '/set_property/s/STEPPER/STEPPER MyPrj/' cmake/mcu_conf/stm32f401xc.cmake
   #+end_src
+
 
   That should be it (no guarantees though!).
 

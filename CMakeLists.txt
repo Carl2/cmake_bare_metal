@@ -10,15 +10,18 @@ include(cmake/arm_stm32.cmake)
 
 include("cmake/MCU_selection.cmake")
 set_project_config( MCU m4 CONF ${CONF_DIR})
-include(${MCU_CONFIG})
+#TODO: The files (MCU_CONFIG) are using set without PARENT SCOPE
+# which means it needs to be included here , otherwise
+# the compiler flags what see it the settings.
+include(${CMAKE_SOURCE_DIR}/cmake/mcu_conf/${MCU_CONFIG})
 
 
 add_library(compile_flags INTERFACE)
-set_stm32_m4_compiler_options(compile_flags)
+set_stm32_compiler_options(compile_flags)
 add_library(compile_definitions INTERFACE)
-set_stm32_m4_compiler_definition(compile_definitions)
+set_stm32_compiler_definition(compile_definitions)
 add_library(linker_flags INTERFACE)
-set_stm32_m4_linker_flags(linker_flags)
+set_stm32_linker_flags(linker_flags)
 
 
 
