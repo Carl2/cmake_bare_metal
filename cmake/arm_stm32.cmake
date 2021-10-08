@@ -28,6 +28,19 @@ function(set_stm32_compiler_options project_name)
     $<$<COMPILE_LANGUAGE:CXX>:-fmessage-length=0>
     $<$<COMPILE_LANGUAGE:C>:-fmessage-length=0>
     ###########################################################################
+    #                                 RelWithDebInfo                           #
+    ###########################################################################
+    $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:RelWithDebInfo>>:-O2 -g -DNDEBUG>
+    $<$<AND:$<COMPILE_LANGUAGE:C>,$<CONFIG:RelWithDebInfo>>:-O2 -g -DNDEBUG>
+    $<$<AND:$<COMPILE_LANGUAGE:ASM>,$<CONFIG:RelWithDebInfo>>:-warn>
+
+    ###########################################################################
+    #                                 MinSizeRel                           #
+    ###########################################################################
+    $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:MinSizeRel>>:-Os>
+    $<$<AND:$<COMPILE_LANGUAGE:C>,$<CONFIG:MinSizeRel>>:-Os>
+    $<$<AND:$<COMPILE_LANGUAGE:ASM>,$<CONFIG:MinSizeRel>>:-warn>
+    ###########################################################################
     #                                  Debug                                  #
     ###########################################################################
     $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:Debug>>:-O0>

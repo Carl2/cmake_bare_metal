@@ -131,6 +131,34 @@
 
      The same idea is used with the different project (/stepper,ph_disco/).
 
+*** TODO Build type
+    When using cmake its possible to use different build types.
+
+    - RelWithDebInfo :: Release with debug info (-O2 -g -DNDEBUG, to be fixed)
+    - Debug :: using debug flags
+    - Release :: Using optimization (-O2 for now)
+    - MinSizeRel :: Optimize for size (-Os) (Not yet fixed!)
+
+
+    So that leaves us with a command line looking like (building Release):
+
+    #+begin_src bash
+             cmake -DCONF_DIR=src/black_pill/Inc \
+                   -DFLAVOR=BLACK_PILL \
+                   -DMCU_CONFIG=stm32f411xe.cmake \
+                   -DCMAKE_BUILD_TYPE=Release \
+                   ..
+    #+end_src
+
+    Here are some tests with different sizes.
+
+    | /Project/  | RelWithdebinfo | Debug | Release | MinSizeRel |
+    |------------+----------------+-------+---------+------------|
+    | Ph_disco   | 310K           | 859K  | 149K    | 148K       |
+    | Black_pill | 192K           | 771K  | 147K    | 148K       |
+
+
+
 
 *** Using ccmake
     /ccmake/ is a tui (terminal user interface) that can be a bit
