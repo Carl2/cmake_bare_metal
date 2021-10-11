@@ -238,7 +238,7 @@
 
 * Add a new Project (from StmCubeIde)
   The idea here is to use the good features of /StmCubeIde/ for
-  configuration i.e clock setup and pheriphereals configuration.  So
+  configuration i.e clock setup and peripherals configuration.  So
   when all is done and you made sure that the project is working.  Its
   time to add it to the project. Lets now consider that the MCU cmake
   file (see MCU_CONFIG) is existing so we are using a already known MCU.
@@ -278,7 +278,7 @@
 
 
   There are however some things that probably needs to be changed.
-  for example the ~Src~ direcotry in your new project might consists
+  for example the ~Src~ directory in your new project might consists
   of other files that needs to be compiled. These files needs to be
   added to the /SRC/ in the ~CMakeLists.txt~ in you new project.
 
