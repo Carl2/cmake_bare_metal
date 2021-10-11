@@ -2,6 +2,8 @@
 #                    Download and build the external CMSIS                    #
 ###############################################################################
 include(${CMAKE_SOURCE_DIR}/cmake/external_dep.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/mcu_command_targets.cmake)
+
 f4_HAL_support(DESTINATION "${CMAKE_SOURCE_DIR}/external/" CONFIG_DIR "${CMAKE_SOURCE_DIR}/src/black_pill/Inc" )
 
 
@@ -18,7 +20,6 @@ set(TARGET_BIN "Stepper")
 
 set(SRC
   Src/main.c
-  #Startup/startup_stm32f411retx.s
   Src/stm32f4xx_hal_msp.c
   Src/stm32f4xx_it.c
   Src/system_stm32f4xx.c
@@ -42,8 +43,4 @@ target_link_libraries(${TARGET_BIN} PRIVATE
   )
 
 
-add_custom_command(
-  TARGET ${TARGET_BIN} POST_BUILD
-  COMMAND arm-none-eabi-objcopy  -O ihex ${TARGET_BIN} ${TARGET_BIN}.hex
-  VERBATIM
-  )
+make_mcu_cmd_target( NAME ${TARGET_BIN} )

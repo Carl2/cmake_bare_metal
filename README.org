@@ -268,7 +268,47 @@
   #+end_src
 
 
-  That should be it (no guarantees though!).
+  You also need to add the *project* to the ~src/CMakeLists.txt~ as an /elseif/ .
+
+  #+begin_src cmake
+  elseif( FLAVOR STREQUAL "MyProj")
+  add_subdirectory(MyPrj)
+  #+end_src
+
+
+
+  There are however some things that probably needs to be changed.
+  for example the ~Src~ direcotry in your new project might consists
+  of other files that needs to be compiled. These files needs to be
+  added to the /SRC/ in the ~CMakeLists.txt~ in you new project.
+
+   #+begin_src cmake
+     set(SRC
+       Src/main.c
+       .
+       .
+       .
+       Src/syscalls.c
+       Src/sysmem.c
+       Src/<new files.(c|cpp)
+       )
+   #+end_src
+
+
+  The new project also needs a memory map script ( if you not already using an existing).
+  these are located in. When using /StmCubeIde/ these are located in the root direcotry
+  of your project.
+
+  #+begin_src bash
+    ls libs/conf/mem
+  #+end_src
+
+  | STM32F103T8UX_FLASH.ld |
+  | STM32F401CCUX_FLASH.ld |
+  | STM32F411RETX_FLASH.ld |
+
+
+
 
 
 ** TODO Adding a new MCU

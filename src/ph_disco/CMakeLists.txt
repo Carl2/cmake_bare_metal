@@ -2,6 +2,8 @@
 #                    Download and build the external CMSIS                    #
 ###############################################################################
 include(${CMAKE_SOURCE_DIR}/cmake/external_dep.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/mcu_command_targets.cmake)
+
 f1_HAL_support(DESTINATION "${CMAKE_SOURCE_DIR}/external" CONFIG_DIR "${CMAKE_SOURCE_DIR}/src/ph_disco/Inc" )
 
 ###############################################################################
@@ -31,11 +33,8 @@ add_executable(${TARGET_BIN} ${SRC})
 target_include_directories(${TARGET_BIN} PRIVATE Inc )
 
 target_link_libraries(${TARGET_BIN} PRIVATE
-  #project_sanitizer
-  #CMSIS
   startup
   stm32F1_HAL_support_lib
-  #Stm32MCUSupport
   compile_flags
   compile_definitions
   )
@@ -46,3 +45,5 @@ add_custom_command(
   COMMAND arm-none-eabi-objcopy  -O ihex ${TARGET_BIN} ${TARGET_BIN}.hex
   VERBATIM
   )
+
+make_mcu_cmd_target( NAME ${TARGET_BIN} )
