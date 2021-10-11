@@ -296,7 +296,7 @@
 
 
   The new project also needs a memory map script ( if you not already using an existing).
-  these are located in. When using /StmCubeIde/ these are located in the root direcotry
+  these are located in ~libs/conf/mem~. When using /StmCubeIde/ these files are located in the root direcotry
   of your project.
 
   #+begin_src bash
