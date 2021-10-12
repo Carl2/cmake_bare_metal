@@ -4,7 +4,7 @@
 include(${CMAKE_SOURCE_DIR}/cmake/external_dep.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/mcu_command_targets.cmake)
 
-f4_HAL_support(DESTINATION "${CMAKE_SOURCE_DIR}/external/" CONFIG_DIR "${CMAKE_SOURCE_DIR}/src/Stepper/Inc" )
+f4_HAL_support(DESTINATION "${CMAKE_SOURCE_DIR}/external/" CONFIG_DIR "${CMAKE_SOURCE_DIR}/src/sml_test/Inc" )
 
 
 ###############################################################################
@@ -16,7 +16,7 @@ add_library(startup OBJECT Startup/startup_stm32f401ccux.s)
 ###############################################################################
 #                            The actual execcutable                           #
 ###############################################################################
-set(TARGET_BIN "Stepper")
+set(TARGET_BIN "sml_test")
 
 set(SRC
   Src/main.c
