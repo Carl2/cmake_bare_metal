@@ -39,7 +39,7 @@ set_property(CACHE CONF_DIR PROPERTY STRINGS "/src/black_pill/Inc" "/src/Alfa/In
 
 
 # Link Time Optimization (LTO)
-include("cmake/StandardProjectSettings.cmake")
+#include("cmake/StandardProjectSettings.cmake")
 # Compiler warnings
 #include("cmake/CompilerWarnings.cmake")
 #include("cmake/Sanitizers.cmake")
@@ -53,7 +53,7 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra ")
 add_library(project_options INTERFACE)
 target_compile_features(project_options INTERFACE cxx_std_17)
 
-set(ENABLE_CLANG_TIDY ON)
+set(ENABLE_CLANG_TIDY OFF)
 include("cmake/StaticAnalyzers.cmake")
 
 #add_library(project_warnings INTERFACE)

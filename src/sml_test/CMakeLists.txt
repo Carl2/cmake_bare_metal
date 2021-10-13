@@ -14,27 +14,44 @@ add_library(startup OBJECT Startup/startup_stm32f401ccux.s)
 
 
 ###############################################################################
+#                            Createa a c++ library                            #
+###############################################################################
+add_library(sm OBJECT cpp/statemachine_simple.cpp )
+target_include_directories(sm PUBLIC  ${CMAKE_SOURCE_DIR}/external/sml/include)
+target_link_libraries(sm PRIVATE
+  stm32F4_HAL_support_lib
+  compile_flags
+  compile_definitions
+  )
+
+###############################################################################
 #                            The actual execcutable                           #
 ###############################################################################
 set(TARGET_BIN "sml_test")
 
 set(SRC
-  Src/main.c
+
+  Src/main.cpp
   Src/stm32f4xx_hal_msp.c
   Src/stm32f4xx_it.c
   Src/system_stm32f4xx.c
   Src/syscalls.c
   Src/sysmem.c
-
   )
 
 add_executable(${TARGET_BIN} ${SRC})
 
-target_include_directories(${TARGET_BIN} PRIVATE Inc)
+target_include_directories(${TARGET_BIN} PRIVATE
+  Inc
+  cpp
+  ${CMAKE_SOURCE_DIR}/external/sml/include
+
+  )
 
 target_link_libraries(${TARGET_BIN} PRIVATE
   #project_sanitizer
   #  CMSIS
+  sm
   startup
   stm32F4_HAL_support_lib
   compile_flags
