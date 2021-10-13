@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 include(cmake/arm-none-eabi-toolchain.cmake)
 include(CMakeDependentOption)
-project ( PH C CXX ASM )
+project ( PH  CXX C ASM )
 
 include(cmake/arm_stm32.cmake)
 #include(cmake/standard_prj_settings.cmake)

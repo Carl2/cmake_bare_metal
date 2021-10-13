@@ -29,17 +29,34 @@ target_link_libraries(sm PRIVATE
 ###############################################################################
 set(TARGET_BIN "sml_test")
 
-set(SRC
 
+# These files needs to be compiled with c++
+set(SRC_CPP
+  "Src/stm32f4xx_hal_msp.c"
+  "Src/stm32f4xx_it.c"
+  "Src/system_stm32f4xx.c"
+
+  )
+
+set(SRC
+  ${SRC_CPP}
   Src/main.cpp
-  Src/stm32f4xx_hal_msp.c
-  Src/stm32f4xx_it.c
-  Src/system_stm32f4xx.c
   Src/syscalls.c
   Src/sysmem.c
   )
 
+
+
+
 add_executable(${TARGET_BIN} ${SRC})
+
+
+set_source_files_properties(
+  ${SRC_CPP}
+  PROPERTIES
+  LANGUAGE CXX
+  )
+
 
 target_include_directories(${TARGET_BIN} PRIVATE
   Inc
@@ -58,6 +75,7 @@ target_link_libraries(${TARGET_BIN} PRIVATE
   compile_definitions
 
   )
+
 
 
 make_mcu_cmd_target( NAME ${TARGET_BIN} )
