@@ -35,6 +35,7 @@ set(SRC_CPP
   "Src/stm32f4xx_hal_msp.c"
   "Src/stm32f4xx_it.c"
   "Src/system_stm32f4xx.c"
+  "cpp/memory.cpp"
 
   )
 

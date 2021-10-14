@@ -30,7 +30,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 //#include "statemachine_simple.hpp"
-#include "statemachine_simple.hpp"
+//#include "statemachine_simple.hpp"
 #include "stm32f4xx_hal.h"
 
 /* Private includes ----------------------------------------------------------*/

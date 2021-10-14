@@ -19,6 +19,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "statemachine_simple.hpp"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -41,9 +42,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim2;
-
 UART_HandleTypeDef huart1;
-
+sml::sm<Blinker_sm> bl_sm;
 /* USER CODE BEGIN PV */
 
 uint8_t data;
@@ -70,6 +70,7 @@ static void MX_USART1_UART_Init(void);
  */
 int main(void)
 {
+    // v.at(5);
     /* USER CODE BEGIN 1 */
 
     /* USER CODE END 1 */
@@ -99,7 +100,7 @@ int main(void)
     HAL_TIM_Base_Start_IT(&htim2);
     HAL_UART_Receive_IT(&huart1, &data, 1);
     HAL_GPIO_EXTI_Callback(GPIO_PIN_2);
-    start_simple_state_machine(huart1);
+    // start_simple_state_machine(huart1);
     // char msg[]="Im alive\n\r";
     /* USER CODE END 2 */
 
@@ -122,8 +123,8 @@ int main(void)
  */
 void SystemClock_Config(void)
 {
-    RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-    RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+    RCC_OscInitTypeDef RCC_OscInitStruct{};
+    RCC_ClkInitTypeDef RCC_ClkInitStruct{};
 
     /** Configure the main internal regulator output voltage
      */
@@ -171,8 +172,8 @@ static void MX_TIM2_Init(void)
 
     /* USER CODE END TIM2_Init 0 */
 
-    TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-    TIM_MasterConfigTypeDef sMasterConfig     = {0};
+    TIM_ClockConfigTypeDef sClockSourceConfig{};
+    TIM_MasterConfigTypeDef sMasterConfig{};
 
     /* USER CODE BEGIN TIM2_Init 1 */
 
@@ -242,7 +243,7 @@ static void MX_USART1_UART_Init(void)
  */
 static void MX_GPIO_Init(void)
 {
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    GPIO_InitTypeDef GPIO_InitStruct{};
 
     /* GPIO Ports Clock Enable */
     __HAL_RCC_GPIOC_CLK_ENABLE();
@@ -265,8 +266,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 {
     if (htim == &htim2)
     {
-
-        __NOP();
+        bl_sm.process_event(evBlinkTimer{});
     }
 }
 
@@ -276,11 +276,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart)
     HAL_UART_Receive_IT(&huart1, &data, 1);
     if (data == '0')
     {
-        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+        bl_sm.process_event(evStopBlink{});
     }
     else if (data == '1')
     {
-        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+        bl_sm.process_event(evStartBlink{});
     }
     data = 0x00;
 }
@@ -318,6 +318,9 @@ void Error_Handler(void)
  */
 void assert_failed(uint8_t* file, uint32_t line)
 {
+    static_cast<void>(file);
+    static_cast<void>(line);
+
     /* USER CODE BEGIN 6 */
     /* User can add his own implementation to report the file name and line number,
        ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
