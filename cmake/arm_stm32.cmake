@@ -92,16 +92,21 @@ endif(MCU_FLOAT)
   target_compile_options(${project_name} INTERFACE
 
     $<$<COMPILE_LANGUAGE:CXX>:-std=c++17>
-    $<$<COMPILE_LANGUAGE:CXX>:-Wextra>
-    $<$<COMPILE_LANGUAGE:CXX>:-Wall>
     $<$<COMPILE_LANGUAGE:CXX>:-pedantic-errors>
     $<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions>
     $<$<COMPILE_LANGUAGE:CXX>:-fno-unwind-tables>
     $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
     $<$<COMPILE_LANGUAGE:CXX>:-nostdlib>
-    $<$<COMPILE_LANGUAGE:C>:-Wall>
-    $<$<COMPILE_LANGUAGE:C>:-Wextra>
 
+    )
+
+  # Common flags c/c++
+  target_compile_options(${project_name} INTERFACE
+    -fdata-sections
+    -ffunction-sections
+    -fstack-usage
+    -Wall
+    -Wextra
     )
 
 endfunction()
@@ -110,10 +115,11 @@ endfunction()
 function(set_stm32_compiler_definition project_name)
   #STM32F411xE
   target_compile_definitions(${project_name} INTERFACE
-    $<$<COMPILE_LANGUAGE:CXX>:DEBUG>
-    $<$<COMPILE_LANGUAGE:C>:DEBUG>
-    $<$<COMPILE_LANGUAGE:CXX>:USE_FULL_ASSERT>
-    $<$<COMPILE_LANGUAGE:C>:USE_FULL_ASSERT>
+    DEBUG
+    USE_FULL_ASSERT
+    )
+
+  target_compile_definitions(${project_name} INTERFACE
     $<$<COMPILE_LANGUAGE:CXX>:${MCU_DEF_MCU}>
     $<$<COMPILE_LANGUAGE:C>:${MCU_DEF_MCU}>
     $<$<COMPILE_LANGUAGE:CXX>:${MCU_DEF_HAL_DRIVER}>
@@ -151,7 +157,8 @@ function(set_stm32_linker_flags project_name)
     -lstdc++
     -lsupc++
     -Wl,--end-group
-
+    -Wl,--gc-sections
+    #-fno-unwind-tables
     )
 
   target_link_options(${project_name} INTERFACE ${STM_LINK_FLAGS}   )
