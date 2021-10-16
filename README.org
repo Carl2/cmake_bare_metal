@@ -28,7 +28,7 @@
 *** Terminal
     Some configuration needs to be done in order for the system to
     figure out what to use.
-     - FLAVOR :: This are the projects. For this build we will use the
+     - FLAVOR :: These are the projects. For this build we will use the
        /BLACK_PILL/, there are 3 others that can be used /STEPPER,PH_DISCO,sml_test/
        They all depend on setting the other variables right (MCU_CONFIG,CONF_DIR).
      - MCU_CONFIG :: This points to a file which sets some different
