@@ -335,7 +335,7 @@ function(f1_HAL_support)
     #############################################################################
   #                           Creating a lib for f4                           #
   #############################################################################
-  add_library(${LIB_NAME} OBJECT
+  add_library(${LIB_NAME} STATIC
     ${HAL_DIR_SRC}/Legacy/stm32f1xx_hal_can.c
     ${HAL_DIR_SRC}/stm32f1xx_hal.c
     ${HAL_DIR_SRC}/stm32f1xx_hal_adc.c
