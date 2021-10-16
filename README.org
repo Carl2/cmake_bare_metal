@@ -3,7 +3,9 @@
 :PROPERTIES:
 :PH-DIR:   /home/calle/git/PH_WIP
 :END:
-
+#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-bigblow.setup
+#+author: calle
+#+title: cmake bare metal (cbm)
 
 * Overview
 
@@ -26,28 +28,26 @@
 *** Terminal
     Some configuration needs to be done in order for the system to
     figure out what to use.
-     - CONF_DIR :: Where to find the configuration, this is needed
-       since there are dependencies from /Stm32CubeFxx/ library to see
-       what hal configuraion it is dependent on , in other words the
-       ~stm32f4xx_hal_conf.h~ for stm32f4. If one has used /StmCubeIde/
-       you should use the include directory in /Core/.
-     - FLAVOR :: This is the project. For this build we will use the
-       /BLACK_PILL/, there are 2 others that can be used /STEPPER,PH_DISCO/
+     - FLAVOR :: This are the projects. For this build we will use the
+       /BLACK_PILL/, there are 3 others that can be used /STEPPER,PH_DISCO,sml_test/
        They all depend on setting the other variables right (MCU_CONFIG,CONF_DIR).
      - MCU_CONFIG :: This points to a file which sets some different
-       variables/flags during compile time. They are located in:
+       variables/flags during compile time which are related to the
+       specific MCU. They are located in:
 
      #+HEADER: :eval never-export  :results output :wrap example :exports both
      #+begin_src bash :dir (org-entry-get nil "PH-DIR" t)
        ls cmake/mcu_conf/*
      #+end_src
 
-
      #+begin_example
      cmake/mcu_conf/stm32f103xb.cmake
      cmake/mcu_conf/stm32f401xc.cmake
      cmake/mcu_conf/stm32f411xe.cmake
      #+end_example
+
+     The project listed are not MCU compatible, which means if you decide to build
+     i.e /BLACK_PILL/ you need to use the /stm32f411xe.cmake/ as /MCU_CONFIG/
 
      So lets try a build example, the configure step may take some time
      (depending on you internet connection) since it will download the /Stm32Cube/ library.
@@ -59,9 +59,10 @@
      #+begin_src bash :dir (org-entry-get nil "PH-DIR" t)
        mkdir black_pill_build cd black_pill_build
 
-       cmake -DCONF_DIR=src/black_pill/Inc \
-             -DFLAVOR=BLACK_PILL \
-             -DMCU_CONFIG=stm32f411xe.cmake ..
+       cmake -DFLAVOR=BLACK_PILL \
+             -DMCU_CONFIG=stm32f411xe.cmake \
+             -DCMAKE_BUILD_TYPE=Release \
+             ..
 
        make -j8
      #+end_src
@@ -129,7 +130,10 @@
      black_pill_build/src/black_pill/BlackPill.hex
      #+end_example
 
-     The same idea is used with the different project (/stepper,ph_disco/).
+     The same idea is used with the different project (/stepper,ph_disco,sml_test/).
+
+     The /sml_test/ is somewhat different since it depends on [[https://github.com/boost-ext/sml][sml c++]] header file.
+     This can be cloned or downloaded to ~${CMAKE_SOURCE_DIR}/external/~
 
 *** TODO Build type
     When using cmake its possible to use different build types.
@@ -143,8 +147,7 @@
     So that leaves us with a command line looking like (building Release):
 
     #+begin_src bash
-             cmake -DCONF_DIR=src/black_pill/Inc \
-                   -DFLAVOR=BLACK_PILL \
+             cmake -DFLAVOR=BLACK_PILL \
                    -DMCU_CONFIG=stm32f411xe.cmake \
                    -DCMAKE_BUILD_TYPE=Release \
                    ..
@@ -154,8 +157,8 @@
 
     | /Project/  | RelWithdebinfo | Debug | Release | MinSizeRel |
     |------------+----------------+-------+---------+------------|
-    | Ph_disco   | 310K           | 859K  | 149K    | 148K       |
-    | Black_pill | 192K           | 771K  | 147K    | 148K       |
+    | Ph_disco   |           9240 | 13696 |    9240 |       8328 |
+    | Black_pill |           5668 |  8096 |    5668 |       5332 |
 
 
 
@@ -184,6 +187,7 @@
     - Black_Pill
     - Stepper
     - PH_disco
+    - sml_test
 
    each of the target resides under src
 
@@ -192,18 +196,15 @@
    tree src -d -L 1
    #+end_src
 
-
    #+begin_example
    src
-   ├── Alfa (x64, not used yet!)
-   ├── Beta (x64, not used yet!)
-   ├── black_pill (stm32f411)
-   ├── Gamma (x64,not used yet!)
-   ├── include (common include)
-   ├── ph_disco (stm32f103)
-   └── Stepper  (stm32f401)
+   ├── black_pill
+   ├── include
+   ├── ph_disco
+   ├── sml_test
+   └── Stepper
 
-   7 directories
+   5 directories
    #+end_example
 
 
@@ -268,7 +269,8 @@
   #+end_src
 
 
-  You also need to add the *project* to the ~src/CMakeLists.txt~ as an /elseif/ .
+  You also need to add the *project* to the ~src/CMakeLists.txt~ as an /elseif/ statement.
+
 
   #+begin_src cmake
   elseif( FLAVOR STREQUAL "MyProj")
@@ -277,12 +279,18 @@
 
 
 
-  There are however some things that probably needs to be changed.
+  There are however some things that probably needs to be changed .
   for example the ~Src~ directory in your new project might consists
-  of other files that needs to be compiled. These files needs to be
-  added to the /SRC/ in the ~CMakeLists.txt~ in you new project.
+  of other files that needs to be compiled, and since you copied the
+  /CMakeLists.txt/ you need to do some minor adjustment for example
+  the source files and project name. These files needs to be added to the /SRC/ in the
+  ~CMakeLists.txt~ in you new project, and don't forget to change the executable name.
 
    #+begin_src cmake
+     set(TARGET_BIN "sml_test")
+
+     add_executable(${TARGET_BIN} ${SRC})
+
      set(SRC
        Src/main.c
        .
@@ -307,10 +315,21 @@
   | STM32F401CCUX_FLASH.ld |
   | STM32F411RETX_FLASH.ld |
 
+  If you are adding a new one, the /mcu config/ file needs to be changed.
+  In other words the one of the files located in ~cmake/mcu_conf/.cmake~
+  There you will find a line consisting of:
+  ~set(MCU_MEMORY_LAYOUT_FILES "STM32F401CCUX_FLASH.ld")~ for example:
+
+  #+HEADER: :eval never-export  :results output :wrap example :exports both
+  #+begin_src bash
+    sed -i 's|STM32F401CCUX_FLASH.ld|my_linker_script_name.ld|g' cmake/mcu_conf/stm32f401xc.cmake
+  #+end_src
+
+
 
 
 
 
 ** TODO Adding a new MCU
-* Tests
+* TODO Tests
   Not implemented yet...
