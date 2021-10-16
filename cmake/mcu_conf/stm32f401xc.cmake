@@ -7,8 +7,8 @@ set(MCU_DEF_MCU "STM32F401xC")
 set(MCU_DEF_HAL_DRIVER "USE_HAL_DRIVER")
 
 
-set(FLAVOR STEPPER CACHE STRING "Flavor(PH) to use")
-set_property(CACHE FLAVOR PROPERTY STRINGS STEPPER)
+set(FLAVOR SML_TEST CACHE STRING "Flavor(PH) to use")
+set_property(CACHE FLAVOR PROPERTY STRINGS STEPPER SML_TEST)
 
 #Linker options
 set(MCU_LINKER_MAP_FILE "${CMAKE_CURRENT_BINARY_DIR}/${FLAVOR}.map")
@@ -22,3 +22,5 @@ set(MCU_MEMORY_LAYOUT_FILES "STM32F401CCUX_FLASH.ld")
 #    This basically means that you can use system calls (and also printf),
 #    but this relies on a debugger being attached, and the CPU may crash if no debugger is present.
 set(MCU_LINKER_SPEC "nano.specs") # nano by default nosys.spec or rdimon.spec...
+
+#set(CONF_DIR "src/sml_test/Inc")

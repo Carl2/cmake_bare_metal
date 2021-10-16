@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.15)
 include(cmake/arm-none-eabi-toolchain.cmake)
 include(CMakeDependentOption)
-project ( PH C CXX ASM )
+project ( PH  CXX C ASM )
 
 include(cmake/arm_stm32.cmake)
-#include(cmake/standard_prj_settings.cmake)
+include(cmake/StandardProjectSettings.cmake)
 #TODO: Now im just going to use the M4...
 
 
@@ -25,21 +25,16 @@ set_stm32_linker_flags(linker_flags)
 
 
 
-
-# set(FLAVOR STEPPER CACHE STRING "Flavor(PH) to use")
-# set_property(CACHE FLAVOR PROPERTY STRINGS STEPPER BLACK_PILL ALFA BETA GAMMA)
-
+#TODO: This is under dev.
 set(CONFIG CONF_ONE CACHE STRING "Config  to use")
 set_property(CACHE CONFIG PROPERTY STRINGS CONF_ONE CONF_TWO)
 
-set(CONF_DIR "src/black_pill/Inc" CACHE STRING "Configure directory")
-set_property(CACHE CONF_DIR PROPERTY STRINGS "/src/black_pill/Inc" "/src/Alfa/Inc" "/src/ph_disco/Inc")
 
 
 
 
 # Link Time Optimization (LTO)
-include("cmake/StandardProjectSettings.cmake")
+#include("cmake/StandardProjectSettings.cmake")
 # Compiler warnings
 #include("cmake/CompilerWarnings.cmake")
 #include("cmake/Sanitizers.cmake")
@@ -53,7 +48,7 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra ")
 add_library(project_options INTERFACE)
 target_compile_features(project_options INTERFACE cxx_std_17)
 
-set(ENABLE_CLANG_TIDY ON)
+set(ENABLE_CLANG_TIDY OFF)
 include("cmake/StaticAnalyzers.cmake")
 
 #add_library(project_warnings INTERFACE)

@@ -104,7 +104,7 @@ endif(MCU_FLOAT)
   target_compile_options(${project_name} INTERFACE
     -fdata-sections
     -ffunction-sections
-    #-fstack-usage
+    -fstack-usage
     -Wall
     -Wextra
     )
@@ -158,6 +158,7 @@ function(set_stm32_linker_flags project_name)
     -lsupc++
     -Wl,--end-group
     -Wl,--gc-sections
+    #-fno-unwind-tables
     )
 
   target_link_options(${project_name} INTERFACE ${STM_LINK_FLAGS}   )
