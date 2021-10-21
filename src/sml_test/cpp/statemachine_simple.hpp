@@ -44,24 +44,34 @@ auto toggle_pin = [](auto ev) {
     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 };
 
+auto make_uart_msg_f = [](auto& x) {
+    return [&x](auto ev) {
+        static_cast<void>(ev);
+        HAL_UART_Transmit(&huart1, (uint8_t*)msg_stop.data(), msg_stop.size(), 10);
+        x++;
+    };
+};
+
 }  // namespace
 
 struct Blinker_sm
 {
-    auto operator()() const
+    auto operator()()
     {
 
         using namespace sml;
         // clang-format off
         return make_transition_table(
             *"init"_s                                             = "not_blinking"_s,
-            "not_blinking"_s + event<evStartBlink> / write_uart            = "blinking"_s,
+            "not_blinking"_s + event<evStartBlink> / make_uart_msg_f(x_)    = "blinking"_s,
             "blinking"_s + event<evBlinkTimer>     / toggle_pin            = "blinking"_s,
             "blinking"_s + event<evStopBlink>      / write_uart            = "not_blinking"_s
 
         );
     }
 
+
+    int x_{};
 
 };
 
