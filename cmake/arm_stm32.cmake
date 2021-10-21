@@ -97,16 +97,20 @@ endif(MCU_FLOAT)
     $<$<COMPILE_LANGUAGE:CXX>:-fno-unwind-tables>
     $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
     $<$<COMPILE_LANGUAGE:CXX>:-nostdlib>
-
+    $<$<COMPILE_LANGUAGE:CXX>:-fno-use-cxa-atexit>
+    $<$<COMPILE_LANGUAGE:C>:-std=gnu11>
     )
 
   # Common flags c/c++
   target_compile_options(${project_name} INTERFACE
+    -ffreestanding
+    -fno-common
     -fdata-sections
     -ffunction-sections
     -fstack-usage
     -Wall
     -Wextra
+    -fno-non-call-exceptions
     )
 
 endfunction()
