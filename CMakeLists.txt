@@ -18,6 +18,8 @@ include(${CMAKE_SOURCE_DIR}/cmake/mcu_conf/${MCU_CONFIG})
 
 add_library(compile_flags INTERFACE)
 set_stm32_compiler_options(compile_flags)
+add_dependencies(compile_flags CBM_tests)
+
 add_library(compile_definitions INTERFACE)
 set_stm32_compiler_definition(compile_definitions)
 add_library(linker_flags INTERFACE)
@@ -39,9 +41,6 @@ set_property(CACHE CONFIG PROPERTY STRINGS CONF_ONE CONF_TWO)
 #include("cmake/CompilerWarnings.cmake")
 #include("cmake/Sanitizers.cmake")
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "-Wall -Wextra ")
 
 
 
@@ -67,5 +66,18 @@ include("cmake/StaticAnalyzers.cmake")
 add_subdirectory(libs)
 add_subdirectory(src)
 
+
+include(ExternalProject)
+ExternalProject_Add(CBM_tests
+  UPDATE_DISCONNECTED true
+  SOURCE_DIR ${CMAKE_SOURCE_DIR}/test
+  BINARY_DIR ${CMAKE_BINARY_DIR}/test_bin
+  BUILD_ALWAYS true
+  STEP_TARGETS build
+  CMAKE_ARGS
+     -DCBM_SOURCE_DIR=${CMAKE_SOURCE_DIR}/src
+     -DCBM_WIP_DIR=${CMAKE_SOURCE_DIR}
+  INSTALL_COMMAND ""
+  )
 #enable_testing()
 #add_subdirectory(tests)
