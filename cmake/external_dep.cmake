@@ -495,3 +495,46 @@ target_link_libraries(${LIB_NAME} PUBLIC
 
 
 endfunction(f1_HAL_support)
+
+
+###############################################################################
+#                            Function to fetch sml                            #
+###############################################################################
+function(boost_sml_support)
+
+  include(FetchContent)
+  cmake_parse_arguments(DWL "" "DESTINATION" "" ${ARGN} )
+
+
+
+  set(LIB_NAME "boost_sml_support")
+  set(SML_DIR "${DWL_DESTINATION}/sml_v1.1.5")
+  set(SML_DIR_INC "${SML_DIR}/include")
+  # set(HAL_DIR_SRC "${HAL_DIR}/Drivers/STM32F1xx_HAL_Driver/Src")
+  # set(HAL_DIR_CORE "${HAL_DIR}/Drivers/CMSIS/Core/Include/")
+
+  # The device headers
+  set(SML_DEVICE_INC "${HAL_DIR}/Drivers/CMSIS/Device/ST/STM32F1xx/Include/")
+  #set(HAL_CORE_INC "${HAL_DIR}/Drivers/CMSIS/Core/Include")
+
+
+
+  #git@github.com:STMicroelectronics/STM32CubeF4.git
+  FetchContent_Declare(sml_content
+    GIT_REPOSITORY    git@github.com:boost-ext/sml.git
+    GIT_TAG           v1.1.5
+    GIT_SHALLOW       True
+    SOURCE_DIR        ${SML_DIR}
+    )
+
+  FetchContent_MakeAvailable(sml_content)
+
+  add_library(boost_sml_support INTERFACE)
+
+  target_include_directories(${LIB_NAME} INTERFACE
+  ${SML_DIR_INC}
+  )
+  #add_library(${LIB_NAME} INTERFACE
+  #/home/calle/git/cmake_bare_metal/external/sml/include
+
+endfunction(boost_sml_support)
