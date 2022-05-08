@@ -5,7 +5,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/external_dep.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/mcu_command_targets.cmake)
 
 f4_HAL_support(DESTINATION "${CMAKE_SOURCE_DIR}/external/" CONFIG_DIR "${CMAKE_SOURCE_DIR}/src/sml_test/Inc" )
-
+boost_sml_support(DESTINATION "${CMAKE_SOURCE_DIR}/external")
 
 ###############################################################################
 #                       Create the startup object (ASM)                       #
@@ -17,11 +17,11 @@ add_library(startup OBJECT Startup/startup_stm32f401ccux.s)
 #                            Createa a c++ library                            #
 ###############################################################################
 add_library(sm OBJECT cpp/statemachine_simple.cpp )
-target_include_directories(sm PUBLIC  ${CMAKE_SOURCE_DIR}/external/sml/include)
 target_link_libraries(sm PRIVATE
   stm32F4_HAL_support_lib
   compile_flags
   compile_definitions
+  boost_sml_support
   )
 
 ###############################################################################
@@ -74,7 +74,7 @@ target_link_libraries(${TARGET_BIN} PRIVATE
   stm32F4_HAL_support_lib
   compile_flags
   compile_definitions
-
+  boost_sml_support
   )
 
 
