@@ -5,7 +5,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/external_dep.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/mcu_command_targets.cmake)
 
 f4_HAL_support(DESTINATION "${CMAKE_SOURCE_DIR}/external/" CONFIG_DIR "${CMAKE_SOURCE_DIR}/src/sml_test/Inc" )
-boost_sml_support(DESTINATION "${CMAKE_SOURCE_DIR}/external/")
+boost_sml_support(DESTINATION "${CMAKE_SOURCE_DIR}/external")
 
 ###############################################################################
 #                       Create the startup object (ASM)                       #
@@ -75,7 +75,7 @@ target_link_libraries(${TARGET_BIN} PRIVATE
   stm32F4_HAL_support_lib
   compile_flags
   compile_definitions
-
+  boost_sml_support
   )
 
 

@@ -1,33 +1,6 @@
 ###############################################################################
 #                         MCU device support external                         #
 ###############################################################################
-# function(f4_device_support)
-
-#   # set(options )
-#   # set(oneValueArgs DESTINATION)
-#   # set(multiValueArgs )
-#   #{CMAKE_SOURCE_DIR}/external/cmsis_device_f4
-#   include(FetchContent)
-#   cmake_parse_arguments(DEVICE "" "DESTINATION" "" ${ARGN} )
-#   set(MCU_SUPPORT_DIR "${DEVICE_DESTINATION}/cmsis_device_f4")
-
-
-
-
-#   FetchContent_Declare(stm32F4_mcu_support
-#     GIT_REPOSITORY    git@github.com:STMicroelectronics/cmsis_device_f4.git
-#     GIT_TAG           v2.6.7
-#     GIT_SHALLOW       True
-#     SOURCE_DIR        ${MCU_SUPPORT_DIR}
-#     # CONFIGURE_COMMAND ""
-#     # BUILD_COMMAND ""
-#     # INSTALL_COMMAND ""
-#     )
-#   #TODO: The Startup file does not need to be saved, the conf can be found
-#   # in here.
-#   set(STM_DEVICE_SUPPORT_INCLUDE "${DEVICE_DESTINATION}/Include"  PARENT_SCOPE )
-#   FetchContent_MakeAvailable(stm32F4_mcu_support)
-# endfunction(f4_device_support)
 
 
 ###############################################################################
@@ -285,10 +258,6 @@ target_link_libraries(${LIB_NAME} PUBLIC
   linker_flags
 )
 
-#   #TODO: More to come
-#   )
-
-# add_dependencies(${LIB_NAME} stm32F4_mcu_support ${stm32F4_HAL_support});
 
 
 endfunction(f4_HAL_support)
@@ -503,38 +472,37 @@ endfunction(f1_HAL_support)
 function(boost_sml_support)
 
   include(FetchContent)
-  cmake_parse_arguments(DWL "" "DESTINATION" "" ${ARGN} )
+  cmake_parse_arguments(SML "" "DESTINATION" "" ${ARGN} )
 
 
 
   set(LIB_NAME "boost_sml_support")
-  set(SML_DIR "${DWL_DESTINATION}/sml_v1.1.5")
+  set(SML_DIR "${SML_DESTINATION}/sml_v1.1.5")
   set(SML_DIR_INC "${SML_DIR}/include")
-  # set(HAL_DIR_SRC "${HAL_DIR}/Drivers/STM32F1xx_HAL_Driver/Src")
-  # set(HAL_DIR_CORE "${HAL_DIR}/Drivers/CMSIS/Core/Include/")
 
-  # The device headers
-  set(SML_DEVICE_INC "${HAL_DIR}/Drivers/CMSIS/Device/ST/STM32F1xx/Include/")
-  #set(HAL_CORE_INC "${HAL_DIR}/Drivers/CMSIS/Core/Include")
-
-
-
-  #git@github.com:STMicroelectronics/STM32CubeF4.git
-  FetchContent_Declare(sml_content
+  set(SML_CONTENT "sml_content")
+  FetchContent_Declare(${SML_CONTENT}
     GIT_REPOSITORY    git@github.com:boost-ext/sml.git
-    GIT_TAG           v1.1.5
+    GIT_TAG           1a8fad5d04fd0e9f77ce7b565dbc395dcb395ac7 # v1.1.5
     GIT_SHALLOW       True
     SOURCE_DIR        ${SML_DIR}
     )
 
-  FetchContent_MakeAvailable(sml_content)
 
-  add_library(boost_sml_support INTERFACE)
+  #############################################################################
+  #                                FetchContent
+  #    For some reason I cant get the getproperties to work, though
+  #    No big deal.
+  #    If using MakeAvailable it tries to build the example,
+  #############################################################################
+  #FetchContent_GetProperties(${SML_CONTENT})
+  #FetchContent_MakeAvailable(${SML_CONTENT})
+
+  FetchContent_Populate(${SML_CONTENT})
+  add_library(${LIB_NAME} INTERFACE)
 
   target_include_directories(${LIB_NAME} INTERFACE
   ${SML_DIR_INC}
   )
-  #add_library(${LIB_NAME} INTERFACE
-  #/home/calle/git/cmake_bare_metal/external/sml/include
 
 endfunction(boost_sml_support)
