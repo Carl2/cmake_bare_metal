@@ -17,7 +17,6 @@ add_library(startup OBJECT Startup/startup_stm32f401ccux.s)
 #                            Createa a c++ library                            #
 ###############################################################################
 add_library(sm OBJECT cpp/statemachine_simple.cpp )
-#target_include_directories(sm PUBLIC  ${CMAKE_SOURCE_DIR}/external/sml/include)
 target_link_libraries(sm PRIVATE
   stm32F4_HAL_support_lib
   compile_flags
