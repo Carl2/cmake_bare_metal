@@ -1,0 +1,69 @@
+* Integration with openocd.
+OpenOCD (on-chip debugger) is a tool that aims to provide debugging ,
+in system programming and boundary-scan testing for embedded target
+devices.
+
+This directory contains configuration to get it to run using a ~stlink-v2~ debugger/programmer
+ here is an example:
+
+ #+HEADER: :eval never-export  :results output :wrap example :exports code
+ #+begin_src bash :dir "/tmp"
+  OPENOCD_SCRIPTS=/usr/share/openocd/scripts/ openocd -f stm32f1.cfg
+ #+end_src
+
+#+begin_example
+Info : Listening on port 6666 for tcl connections
+Info : Listening on port 4444 for telnet connections
+Info : clock speed 1000 kHz
+Info : STLINK V1J13S0 (API v2) VID:PID 0483:3744
+Error: SRST error
+Info : stm32f1x.cpu: hardware has 6 breakpoints, 4 watchpoints
+Info : starting gdb server for stm32f1x.cpu on 3333
+Info : Listening on port 3333 for gdb connections
+#+end_example
+
+
+* Telnet connection
+One can connect to the ~openOCD~ telnet and use various commands, for example to *reset*..
+
+#+HEADER: :eval never-export  :results output :wrap example :exports both
+#+begin_src bash :dir "/tmp"
+     telnet localhost 4444
+     > reset halt
+     target halted due to debug-request, current mode: Thread
+     xPSR: 0x01000000 pc: 0x08004e58 msp: 0x20005000
+
+     >flash banks
+     #0 : stm32f1x.flash (stm32f1x) at 0x08000000, size 0x00000000, buswidth 0, chipwidth 0
+
+     > target names
+  stm32f1x.cpu
+
+  > flash probe 0
+  device id = 0x20036410
+  flash size = 64kbytes
+  flash 'stm32f1x' found at 0x08000000
+#+end_src
+
+* using GDB
+
+When using /arm-none-eabi-gdb/ and openocd the gdb connection is remote to port 3333.
+
+#+HEADER: :eval never-export  :results output :wrap example :exports code
+#+begin_src bash :dir "/tmp"
+  arm-none-eabi-gdb src/FSSPH/FSSP
+(gdb) target extended-remote localhost:3333
+Remote debugging using localhost:3333
+main () at /home/calle/git/PH_WIP/src/FSSPH/Core/Src/main.c:426
+
+
+#+end_src
+
+The software can be resetted using the telnet connection together with the command ~reset halt~.
+Then the software will restart allover again.
+
+
+
+
+* Resources
+ - [[https://openocd.org/doc/pdf/openocd.pdf][openocd.pdf]]
