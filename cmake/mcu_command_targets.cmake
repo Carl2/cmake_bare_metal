@@ -22,3 +22,22 @@ function(make_mcu_cmd_target)
     )
 
 endfunction()
+
+
+###############################################################################
+#                                Make ocd_flash
+#                                Flash using picoprobe or somrthing else
+###############################################################################
+function(make_openocd_target)
+  cmake_parse_arguments(TARGET "" "NAME;OPENOCD_PATH;OPENOCD_INTERFACE;OPENOCD_TARGET" "" ${ARGN})
+
+  get_target_property(BIN_DIR ${TARGET_NAME} BINARY_DIR)
+
+  add_custom_target(ocd_flash
+    COMMAND bash -c "${CMAKE_SOURCE_DIR}/tools/openocd/run_openocd.sh -o ${TARGET_OPENOCD_PATH} \
+-i ${TARGET_OPENOCD_INTERFACE} \
+-t ${TARGET_OPENOCD_TARGET} \
+-e ${BIN_DIR}/${TARGET_NAME}"
+    VERBATIM
+    )
+endfunction(make_openocd_target)

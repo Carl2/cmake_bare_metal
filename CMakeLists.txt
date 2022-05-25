@@ -8,12 +8,21 @@ include(cmake/StandardProjectSettings.cmake)
 #TODO: Now im just going to use the M4...
 
 
+
 include("cmake/MCU_selection.cmake")
 set_project_config( MCU m4 CONF ${CONF_DIR})
 #TODO: The files (MCU_CONFIG) are using set without PARENT SCOPE
 # which means it needs to be included here , otherwise
 # the compiler flags what see it the settings.
 include(${CMAKE_SOURCE_DIR}/cmake/mcu_conf/${MCU_CONFIG})
+
+
+###############################################################################
+#                           See mcu_command_target.cmake
+#                           This will be used to create make ocd_flash
+###############################################################################
+set(OPENOCD_PATH "/usr/bin" CACHE STRING "Where to find openocd")
+set(OPENOCD_INTERFACE "picoprobe" CACHE STRING "Interface to use ")
 
 
 add_library(compile_flags INTERFACE)
