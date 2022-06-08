@@ -16,5 +16,5 @@ tmux new-session \
  ${TARGET_OPENOCD_PATH} -i\
  ${TARGET_OPENOCD_INTERFACE} -t \
  ${TARGET_OPENOCD_TARGET}" \; \
- split-window -h -p 80 "arm-none-eabi-gdb ${TARGET_BIN}.elf -x ${GDB_CFG}" \;
+ split-window -h -p 80 "arm-none-eabi-gdb ${TARGET_BIN} -x ${GDB_CFG}" \;
 #--args ${TARGET_BIN}"
