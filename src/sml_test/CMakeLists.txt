@@ -80,3 +80,9 @@ target_link_libraries(${TARGET_BIN} PRIVATE
 
 
 make_mcu_cmd_target( NAME ${TARGET_BIN} )
+make_openocd_target(
+  NAME ${TARGET_BIN}
+  OPENOCD_PATH ${OPENOCD_PATH}
+  OPENOCD_INTERFACE ${OPENOCD_INTERFACE}
+  OPENOCD_TARGET stm32f4x
+  )
