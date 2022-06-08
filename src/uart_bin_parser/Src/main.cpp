@@ -19,8 +19,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "statemachine_simple.hpp"
-
+#include <array>
+#include "msg_def.hpp"
+#include "msg_sml.hpp"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -43,9 +44,16 @@
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim2;
 UART_HandleTypeDef huart1;
-sml::sm<Blinker_sm> bl_sm{};
+
+// sml::sm<Blinker_sm> bl_sm{};
 /* USER CODE BEGIN PV */
 
+namespace
+{
+
+std::array<uint8_t, 100> uart_data;
+
+}  // namespace
 uint8_t data;
 
 /* USER CODE END PV */
@@ -70,6 +78,9 @@ static void MX_USART1_UART_Init(void);
  */
 int main(void)
 {
+
+    auto uart_irq_fn = [](uint16_t sz) { HAL_UART_Receive_IT(&huart1, uart_data.data(), sz); };
+    msg::MainMachine m_sm{msg::SystemContext{uart_irq_fn}};
     // v.at(5);
     /* USER CODE BEGIN 1 */
 
@@ -159,14 +170,13 @@ void SystemClock_Config(void)
         Error_Handler();
     }
 }
-?
-    /**
-     * @brief TIM2 Initialization Function
-     * @param None
-     * @retval None
-     */
-    static void
-    MX_TIM2_Init(void)
+
+/**
+ * @brief TIM2 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_TIM2_Init(void)
 {
 
     /* USER CODE BEGIN TIM2_Init 0 */
@@ -267,7 +277,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 {
     if (htim == &htim2)
     {
-        bl_sm.process_event(evBlinkTimer{});
+        // bl_sm.process_event(evBlinkTimer{});
     }
 }
 
@@ -277,11 +287,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart)
     HAL_UART_Receive_IT(&huart1, &data, 1);
     if (data == '0')
     {
-        bl_sm.process_event(evStopBlink{});
+        // bl_sm.process_event(evStopBlink{});
     }
     else if (data == '1')
     {
-        bl_sm.process_event(evStartBlink{});
+        // bl_sm.process_event(evStartBlink{});
     }
     data = 0x00;
 }
