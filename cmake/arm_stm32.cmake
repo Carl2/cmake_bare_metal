@@ -30,8 +30,8 @@ function(set_stm32_compiler_options project_name)
     ###########################################################################
     #                                 RelWithDebInfo                           #
     ###########################################################################
-    $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:RelWithDebInfo>>:-O2 -g -DNDEBUG>
-    $<$<AND:$<COMPILE_LANGUAGE:C>,$<CONFIG:RelWithDebInfo>>:-O2 -g -DNDEBUG>
+    $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:RelWithDebInfo>>:-O2 -g3 -DNDEBUG>
+    $<$<AND:$<COMPILE_LANGUAGE:C>,$<CONFIG:RelWithDebInfo>>:-O2 -g3 -DNDEBUG>
     $<$<AND:$<COMPILE_LANGUAGE:ASM>,$<CONFIG:RelWithDebInfo>>:-warn>
 
     ###########################################################################
@@ -43,10 +43,10 @@ function(set_stm32_compiler_options project_name)
     ###########################################################################
     #                                  Debug                                  #
     ###########################################################################
-    $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:Debug>>:-O0>
+    $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:Debug>>:-Os>
     $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:Debug>>:-g3>
 
-    $<$<AND:$<COMPILE_LANGUAGE:C>,$<CONFIG:Debug>>:-O0>
+    $<$<AND:$<COMPILE_LANGUAGE:C>,$<CONFIG:Debug>>:-Os>
     $<$<AND:$<COMPILE_LANGUAGE:C>,$<CONFIG:Debug>>:-g3>
     $<$<AND:$<COMPILE_LANGUAGE:ASM>,$<CONFIG:Debug>>:-g>
     ###########################################################################
@@ -91,7 +91,7 @@ endif(MCU_FLOAT)
   #############################################################################
   target_compile_options(${project_name} INTERFACE
 
-    $<$<COMPILE_LANGUAGE:CXX>:-std=c++17>
+    $<$<COMPILE_LANGUAGE:CXX>:-std=c++20>
     $<$<COMPILE_LANGUAGE:CXX>:-pedantic-errors>
     $<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions>
     $<$<COMPILE_LANGUAGE:CXX>:-fno-unwind-tables>
@@ -99,6 +99,10 @@ endif(MCU_FLOAT)
     $<$<COMPILE_LANGUAGE:CXX>:-nostdlib>
     $<$<COMPILE_LANGUAGE:CXX>:-fno-use-cxa-atexit>
     $<$<COMPILE_LANGUAGE:C>:-std=gnu11>
+
+    #Removing some Warnings from CMSIS
+    $<$<COMPILE_LANGUAGE:CXX>:-Wno-register>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wno-volatile>
     )
 
   # Common flags c/c++
@@ -107,10 +111,11 @@ endif(MCU_FLOAT)
     -fno-common
     -fdata-sections
     -ffunction-sections
-    -fstack-usage
+    #-fstack-usage
     -Wall
     -Wextra
     -fno-non-call-exceptions
+    -Wconversion
     )
 
 endfunction()
@@ -154,7 +159,7 @@ function(set_stm32_linker_flags project_name)
     -Xlinker
     -Map=${MCU_LINKER_MAP_FILE}
     -Wl,--gc-section
-    -specs=${MCU_LINKER_SPEC}
+    #-Wl,-specs=${MCU_LINKER_SPEC}
     -Wl,--start-group # Searches for symbols several times in the libs
     -lc               # betweek start/end group
     -lm
@@ -162,6 +167,7 @@ function(set_stm32_linker_flags project_name)
     -lsupc++
     -Wl,--end-group
     -Wl,--gc-sections
+    -Wl,--allow-multiple-definition
     #-fno-unwind-tables
     )
 
