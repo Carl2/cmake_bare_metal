@@ -70,14 +70,12 @@ add_subdirectory(src)
 include(ExternalProject)
 ExternalProject_Add(CBM_tests
   UPDATE_DISCONNECTED true
-  SOURCE_DIR ${CMAKE_SOURCE_DIR}/test
+  SOURCE_DIR ${CMAKE_SOURCE_DIR}/tests
   BINARY_DIR ${CMAKE_BINARY_DIR}/test_bin
   BUILD_ALWAYS true
   STEP_TARGETS build
   CMAKE_ARGS
-     -DCBM_SOURCE_DIR=${CMAKE_SOURCE_DIR}/src
-     -DCBM_WIP_DIR=${CMAKE_SOURCE_DIR}
+     -DPB_SOURCE_DIR=${CMAKE_SOURCE_DIR}/src
+     -DPB_WIP_DIR=${CMAKE_SOURCE_DIR}
   INSTALL_COMMAND ""
   )
-#enable_testing()
-#add_subdirectory(tests)
