@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <concepts>
 
 namespace msg
@@ -6,6 +7,12 @@ namespace msg
 
 struct EvInit
 {};
+
+struct EvMsg
+{
+    std::array<uint8_t, 100> data_{};
+    size_t sz{};
+};
 
 template <std::invocable<uint16_t> T>
 struct SystemContext

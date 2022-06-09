@@ -52,9 +52,10 @@ namespace
 {
 
 std::array<uint8_t, 100> uart_data;
+std::array<uint8_t, 100> uart_msg_data;
+volatile bool msg_recv_flag{};
 
 }  // namespace
-uint8_t data;
 
 /* USER CODE END PV */
 
@@ -109,8 +110,10 @@ int main(void)
     /* USER CODE BEGIN 2 */
     MX_USART1_UART_Init();
     HAL_TIM_Base_Start_IT(&htim2);
-    HAL_UART_Receive_IT(&huart1, &data, 1);
+
     HAL_GPIO_EXTI_Callback(GPIO_PIN_2);
+
+    HAL_UART_Receive_IT(&huart1, uart_data.data(), 48);
     // start_simple_state_machine(huart1);
     // char msg[]="Im alive\n\r";
     /* USER CODE END 2 */
@@ -121,6 +124,11 @@ int main(void)
     {
         // HAL_Delay(500);
         // HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), 10);
+        if (msg_recv_flag)
+        {
+            m_sm.new_message(uart_msg_data);
+            msg_recv_flag = false;
+        }
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
@@ -283,17 +291,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart)
 {
-    HAL_UART_Transmit(huart, &data, 1, 10);
-    HAL_UART_Receive_IT(&huart1, &data, 1);
-    if (data == '0')
-    {
-        // bl_sm.process_event(evStopBlink{});
-    }
-    else if (data == '1')
-    {
-        // bl_sm.process_event(evStartBlink{});
-    }
-    data = 0x00;
+    static_cast<void>(huart);
+    std::memcpy(uart_msg_data.data(), uart_data.data(), huart->RxXferSize);
+    std::string_view msg{"Not a problem\n\r"};
+    HAL_UART_Transmit(&huart1, (uint8_t*)msg.data(), msg.size(), 10);
+
+    msg_recv_flag = true;
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)

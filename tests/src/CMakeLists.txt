@@ -5,6 +5,7 @@ find_package(sml)
 
 include_directories(
   ${PB_SOURCE_DIR}
+  ${PB_SOURCE_DIR}/uart_bin_parser/cpp/
   )
 
 set(SRC
