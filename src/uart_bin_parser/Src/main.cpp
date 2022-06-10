@@ -20,6 +20,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include <array>
+#include <string_view>
 #include "msg_def.hpp"
 #include "msg_sml.hpp"
 /* Private includes ----------------------------------------------------------*/
@@ -55,6 +56,12 @@ std::array<uint8_t, 100> uart_data;
 std::array<uint8_t, 100> uart_msg_data;
 volatile bool msg_recv_flag{};
 
+auto uart_sync_send = [](std::string_view view) {
+    std::array<uint8_t, 100> buffer;
+    memcpy(buffer.data(), view.data(), view.size());
+    HAL_UART_Transmit(&huart1, buffer.data(), static_cast<uint16_t>(view.size()), 10);
+};
+
 }  // namespace
 
 /* USER CODE END PV */
@@ -80,8 +87,14 @@ static void MX_USART1_UART_Init(void);
 int main(void)
 {
 
-    auto uart_irq_fn = [](uint16_t sz) { HAL_UART_Receive_IT(&huart1, uart_data.data(), sz); };
-    msg::MainMachine m_sm{msg::SystemContext{uart_irq_fn}};
+    auto uart_irq_fn = [](uint16_t sz) {
+        // TODO: Need to check that size is reasonable.
+        //
+        __NOP();
+        HAL_UART_Receive_IT(&huart1, uart_data.data(), sz);
+    };
+
+    msg::MainMachine m_sm{msg::SystemContext{uart_irq_fn, uart_sync_send}};
     // v.at(5);
     /* USER CODE BEGIN 1 */
 
@@ -294,7 +307,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart)
     static_cast<void>(huart);
     std::memcpy(uart_msg_data.data(), uart_data.data(), huart->RxXferSize);
     std::string_view msg{"Not a problem\n\r"};
-    HAL_UART_Transmit(&huart1, (uint8_t*)msg.data(), msg.size(), 10);
+    uart_sync_send(msg);
 
     msg_recv_flag = true;
 }

@@ -14,11 +14,12 @@ struct EvMsg
     size_t sz{};
 };
 
-template <std::invocable<uint16_t> T>
+template <std::invocable<uint16_t> T, std::invocable<std::string_view> Uart_Out_t>
 struct SystemContext
 {
 
     T uart_msg_init_;
+    Uart_Out_t uart_msg_transmit_;
 };
 
 template <typename T>
