@@ -62,6 +62,18 @@ auto uart_sync_send = [](std::string_view view) {
     HAL_UART_Transmit(&huart1, buffer.data(), static_cast<uint16_t>(view.size()), 10);
 };
 
+auto receive_message_data = [](std::span<const uint8_t> data) {
+    static_cast<void>(data);
+    __NOP();
+};
+
+auto uart_irq_fn = [](uint16_t sz) {
+    // TODO: Need to check that size is reasonable.
+    //
+    __NOP();
+    HAL_UART_Receive_IT(&huart1, uart_data.data(), sz);
+};
+
 }  // namespace
 
 /* USER CODE END PV */
@@ -87,14 +99,7 @@ static void MX_USART1_UART_Init(void);
 int main(void)
 {
 
-    auto uart_irq_fn = [](uint16_t sz) {
-        // TODO: Need to check that size is reasonable.
-        //
-        __NOP();
-        HAL_UART_Receive_IT(&huart1, uart_data.data(), sz);
-    };
-
-    msg::MainMachine m_sm{msg::SystemContext{uart_irq_fn, uart_sync_send}};
+    msg::MainMachine m_sm{msg::SystemContext{uart_irq_fn, uart_sync_send, receive_message_data}};
     // v.at(5);
     /* USER CODE BEGIN 1 */
 
@@ -126,9 +131,10 @@ int main(void)
 
     HAL_GPIO_EXTI_Callback(GPIO_PIN_2);
 
-    HAL_UART_Receive_IT(&huart1, uart_data.data(), 48);
-    // start_simple_state_machine(huart1);
-    // char msg[]="Im alive\n\r";
+    uart_irq_fn(6);
+    // HAL_UART_Receive_IT(&huart1, uart_data.data(), 6);
+    //  start_simple_state_machine(huart1);
+    //  char msg[]="Im alive\n\r";
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -141,6 +147,7 @@ int main(void)
         {
             m_sm.new_message(uart_msg_data);
             msg_recv_flag = false;
+            HAL_UART_Receive_IT(&huart1, uart_data.data(), 1);
         }
         /* USER CODE END WHILE */
 
@@ -306,8 +313,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart)
 {
     static_cast<void>(huart);
     std::memcpy(uart_msg_data.data(), uart_data.data(), huart->RxXferSize);
-    std::string_view msg{"Not a problem\n\r"};
-    uart_sync_send(msg);
+    // std::string_view msg{"Not a problem\n\r"};
+    // uart_sync_send(msg);
 
     msg_recv_flag = true;
 }

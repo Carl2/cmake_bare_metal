@@ -40,10 +40,16 @@ struct MainMachine
                 [[maybe_unused]] auto cmd = bin::create_span(id_val, from, spn);
                 auto len                  = bin::create_span(id_val, from, spn);
                 ctx.uart_msg_init_(len);
-                ctx.uart_msg_transmit_("Set uart to be something");
-                // std::array<uint8_t, 7> arr = {0x01, 0x01, 0x02, 0x02, 0xFF};
-                // auto tp                    = bin::parse_bin(arr);
-                //  bin::make_spans<uint16_t, uint8_t>(spn);
+                // ctx.uart_msg_transmit_("Set uart to be something");
+                //  std::array<uint8_t, 7> arr = {0x01, 0x01, 0x02, 0x02, 0xFF};
+                //  auto tp                    = bin::parse_bin(arr);
+                //   bin::make_spans<uint16_t, uint8_t>(spn);
+            };
+
+            auto receive_message = [](const auto& ev, SysCtx& ctx) {
+                auto data = std::span(ev.data_.begin(), ev.sz);
+                ctx.receive_data(data);
+                ctx.uart_msg_init_(6);
             };
 
             // clang-format off
@@ -51,6 +57,7 @@ struct MainMachine
             //-[CurrentState]---|------[Event]-----|---[Guard]----|--[Action]---|--Next State-----
             *MsgInit                                                                = WaitForHdr
             ,WaitForHdr          + event<EvMsg>                     / set_msg_len    = WaitForMsg
+            ,WaitForMsg         + event<EvMsg>             / receive_message     = WaitForHdr
 
            );
             // clang-format on
@@ -69,7 +76,7 @@ struct MainMachine
     {
         // EvMsg ev_msg{};
         // msg_sm_.process_event(EvInit{});
-        msg_sm_.process_event(EvMsg{msg, 48});
+        msg_sm_.process_event(EvMsg{msg, 6});
     }
 };
 
