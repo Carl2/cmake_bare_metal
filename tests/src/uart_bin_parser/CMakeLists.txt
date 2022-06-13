@@ -1,9 +1,7 @@
-set(EXEC_NAME "hw_tests")
+set(EXEC_NAME "uart_bin_parser")
 find_package(GTest)
 find_package(fmt)
 find_package(sml)
-
-add_subdirectory(uart_bin_parser)
 
 include_directories(
   ${PB_SOURCE_DIR}

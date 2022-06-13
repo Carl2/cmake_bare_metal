@@ -52,19 +52,28 @@ UART_HandleTypeDef huart1;
 namespace
 {
 
-std::array<uint8_t, 100> uart_data;
-std::array<uint8_t, 100> uart_msg_data;
+msg::Uart_buffer_t uart_data;
+
+struct Receive_data
+{
+    msg::Uart_buffer_t uart_msg_data;
+    std::size_t sz;
+};
+
+Receive_data recv_data;
+
 volatile bool msg_recv_flag{};
 
 auto uart_sync_send = [](std::string_view view) {
-    std::array<uint8_t, 100> buffer;
+    msg::Uart_buffer_t buffer;
     memcpy(buffer.data(), view.data(), view.size());
     HAL_UART_Transmit(&huart1, buffer.data(), static_cast<uint16_t>(view.size()), 10);
 };
 
-auto receive_message_data = [](std::span<const uint8_t> data) {
-    static_cast<void>(data);
-    __NOP();
+auto receive_message_data = [](std::span<const uint8_t> view) {
+    msg::Uart_buffer_t buffer;
+    memcpy(buffer.data(), view.data(), view.size());
+    HAL_UART_Transmit(&huart1, buffer.data(), static_cast<uint16_t>(view.size()), 10);
 };
 
 auto uart_irq_fn = [](uint16_t sz) {
@@ -145,7 +154,7 @@ int main(void)
         // HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), 10);
         if (msg_recv_flag)
         {
-            m_sm.new_message(uart_msg_data);
+            m_sm.new_message(recv_data.uart_msg_data, recv_data.sz);
             msg_recv_flag = false;
             HAL_UART_Receive_IT(&huart1, uart_data.data(), 1);
         }
@@ -311,8 +320,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart)
 {
-    static_cast<void>(huart);
-    std::memcpy(uart_msg_data.data(), uart_data.data(), huart->RxXferSize);
+    std::memcpy(recv_data.uart_msg_data.data(), uart_data.data(), huart->RxXferSize);
+    recv_data.sz = huart->RxXferSize;
     // std::string_view msg{"Not a problem\n\r"};
     // uart_sync_send(msg);
 
