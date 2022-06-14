@@ -35,9 +35,8 @@ struct MainMachine
                 ctx.receive_header(std::span(ev.data_.begin(), ev.sz));
             };
 
-            auto receive_message = [](const auto& ev, SysCtx& ctx) {
-                auto data = std::span(ev.data_.begin(), ev.sz);
-                ctx.receive_data(data);
+            auto receive_message = [](auto ev, SysCtx& ctx) {
+                ctx.receive_data(std::move(ev.data_), ev.sz);
             };
 
             // clang-format off

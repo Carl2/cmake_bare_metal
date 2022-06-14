@@ -39,11 +39,12 @@ struct SystemContext
     Uart_Out_t uart_msg_transmit_;
     data_recv_fn data_recv_fn_;
 
-    void receive_data(std::span<const uint8_t> data)
+    template <size_t N>
+    void receive_data(std::array<uint8_t, N>&& message, size_t sz)
     {
 
-        memcpy(&msg_data.payload, data.data(), data.size());
-        std::span<const uint8_t> recv_span(data.begin(), data.size());
+        msg_data.payload = message;
+        std::span<const uint8_t> recv_span(msg_data.payload.begin(), sz);
         data_recv_fn_(recv_span);
         uart_msg_transmit_("Data Received\n\r");
         uart_msg_init_(HDR_SZ);
@@ -69,7 +70,7 @@ struct SystemContext
     struct Payload
     {
         Uart_buffer_t payload{};
-        std::span<uint8_t> crc{};
+        std::span<const uint8_t> crc{};
     };
 
     Header hdr{};
