@@ -19,6 +19,8 @@ struct Callback_values
         // size_t sz{};
     };
     Recv_data recv_data;
+    uint16_t address{};
+    bool ret_address_check{true};  // Return from address check
 };
 
 namespace
@@ -33,8 +35,13 @@ auto receive_message_data = [](std::span<const uint8_t> data) {
     cb.recv_data.data_span = data;
 };
 
+auto check_address = [](uint16_t address) {
+    cb.address = address;
+    return cb.ret_address_check;
+};
+
 using sysctx_t = msg::SystemContext<decltype(uart_irq_fn), decltype(uart_sync_send),
-                                    decltype(receive_message_data)>;
+                                    decltype(receive_message_data), decltype(check_address)>;
 }  // namespace
 
 class Uart_comm_test : public ::testing::Test
@@ -42,7 +49,7 @@ class Uart_comm_test : public ::testing::Test
  protected:
     Uart_comm_test() {}
 
-    sysctx_t ctx{uart_irq_fn, uart_sync_send, receive_message_data};
+    sysctx_t ctx{uart_irq_fn, uart_sync_send, receive_message_data, check_address};
 
     msg::MainMachine<sysctx_t> m_sm{std::move(ctx)};
     //     msg::SystemContext};

@@ -30,8 +30,6 @@ struct MainMachine
         {
             using namespace sml;
             auto set_msg_len = [this](const auto& ev, SysCtx& ctx) {
-                using namespace std::ranges;
-
                 ctx.receive_header(std::span(ev.data_.begin(), ev.sz));
             };
 
@@ -42,15 +40,22 @@ struct MainMachine
             auto check_address = [](SysCtx& ctx) {
                 static_cast<void>(ctx);
                 // Only messsages that are destined to us are important
+                return ctx.is_our_msg();
+            };
+
+            auto check_crc = [](const auto& ev, SysCtx& ctx) {
+                static_cast<void>(ev);
+                static_cast<void>(ctx);
                 return true;
             };
 
             // clang-format off
         return make_transition_table(
             //-[CurrentState]---|------[Event]-----|---[Guard]----|--[Action]---|--Next State-----
-            *MsgInit                                                                  = WaitForHdr
-            ,WaitForHdr          + event<EvMsg>                     / set_msg_len     = WaitForMsg
-            ,WaitForMsg         + event<EvMsg>      [check_address]     / receive_message = WaitForHdr
+            *MsgInit                                                                   = WaitForHdr
+            ,WaitForHdr          + event<EvMsg>                      / set_msg_len     = WaitForMsg
+            ,WaitForMsg   + event<EvMsg> [check_address and check_crc] / receive_message = WaitForHdr
+            ,WaitForMsg          + event<EvMsg>      [not check_address]               = WaitForHdr
 
            );
             // clang-format on

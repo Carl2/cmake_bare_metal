@@ -33,6 +33,7 @@ TEST_F(Uart_comm_test, header_check)
         m_sm.new_message(payload, 8);
         ASSERT_EQ(cb.recv_irq_sz, 6);  // Set to wait for Header size = 6
         ASSERT_EQ(cb.recv_data.data_span.size(), 8);
+        ASSERT_EQ(cb.address, 0xaaaa);
         auto cb_iter = cb.recv_data.data_span.begin();
         for (const auto& item : payload | std::ranges::views::take(8))
         {
@@ -40,6 +41,39 @@ TEST_F(Uart_comm_test, header_check)
             // ASSERT_EQ(*cb_iter, item);
             ++cb_iter;
         }
+    }
+}
+
+TEST_F(Uart_comm_test, check_address_test)
+{
+    cb                   = {};
+    cb.ret_address_check = true;  // Its true by default..
+    msg::Uart_buffer_t msg{0xaa, 0xaa, 0x01, 0x00, 0x06, 0x00};
+    m_sm.new_message(msg, msg.size());
+    ASSERT_EQ(cb.address, 0);
+
+    {
+        msg::Uart_buffer_t payload = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0xff, 0xff};
+        m_sm.new_message(payload, 8);
+        ASSERT_EQ(cb.recv_irq_sz, 6);  // Set to wait for Header size = 6
+        ASSERT_EQ(cb.address, 0xaaaa);
+        ASSERT_EQ(cb.recv_data.data_span.size(), 8);
+    }
+
+    cb.recv_data.data_span = {};
+
+    {
+        msg::Uart_buffer_t msg2{0x01, 0x00, 0x01, 0x00, 0x01, 0x00};
+        cb.ret_address_check = false;  // Now returning false, meaning we should ignore it.
+        m_sm.new_message(msg2, msg2.size());
+        ASSERT_EQ(cb.recv_irq_sz, 3);  // 1 byte + 2 byte CRC
+    }
+    {
+        msg::Uart_buffer_t payload2{0x01, 0xa1, 0xa2};
+        m_sm.new_message(payload2, payload2.size());
+        ASSERT_EQ(cb.recv_data.data_span.size(), 0);  // No callback since check
+                                                      // address returned false,
+                                                      // we ignore the message.
     }
 }
 

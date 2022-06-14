@@ -7,6 +7,7 @@
 
 namespace msg
 {
+
 // TODO: Does this really need that big?
 // Max size of payload is 50 byte :O + crc (2 bytes)
 
@@ -15,6 +16,25 @@ constexpr static size_t UART_BUFFER_MAX_SIZE = 50 + CRC_SIZE;
 constexpr static uint8_t HDR_SZ              = 6;
 using Uart_buffer_t                          = std::array<uint8_t, UART_BUFFER_MAX_SIZE>;
 
+///////////////////////////////////////////////////////////////////////////////
+//                              Message headers/payload                      //
+///////////////////////////////////////////////////////////////////////////////
+struct Header
+{
+    uint16_t id;
+    uint16_t cmd;
+    uint16_t len;
+};
+
+struct Payload
+{
+    Uart_buffer_t payload{};
+    std::span<const uint8_t> crc{};
+};
+
+///////////////////////////////////////////////////////////////////////////////
+//                        Events for the statemachine                        //
+///////////////////////////////////////////////////////////////////////////////
 struct EvInit
 {};
 
@@ -25,19 +45,43 @@ struct EvMsg
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-//                                  Uart message struct                      //
+//                                  Concepts
+//    Primarily used to check the context callback functionality
+///////////////////////////////////////////////////////////////////////////////
+// clang-format off
+template<typename F>
+concept is_address_check = requires(F& fn,uint16_t address)
+{
+    {fn(address)} -> std::convertible_to<bool>;
+};
+// clang-format on
+
+///////////////////////////////////////////////////////////////////////////////
+//                              Message context                               //
 ///////////////////////////////////////////////////////////////////////////////
 
 // clang-format off
-template <std::invocable<uint16_t> T,
-          std::invocable<std::string_view> Uart_Out_t,
-          std::invocable<std::span<const uint8_t>> data_recv_fn>
+template <std::invocable<uint16_t> message_size_fn_t,
+          std::invocable<std::string_view> uart_out_t,
+          std::invocable<std::span<const uint8_t>> data_recv_fn,
+          is_address_check address_check_fn >
 struct SystemContext
 {
     // clang-format on
-    T uart_msg_init_;
-    Uart_Out_t uart_msg_transmit_;
+    /// message_size_fn_t - a callback function that
+    /// sends the message length to the subscriber.
+    message_size_fn_t uart_msg_init_;
+    /// uart_out_t - Uart out function, used for debugging.
+    /// Will be used to send back information, for example
+    /// ack and nack
+    uart_out_t uart_msg_transmit_;
+    /// data_recv_fn - callback that sends back a span of the
+    /// message payload includeing (for now) the CRC (2bytes @ end)
     data_recv_fn data_recv_fn_;
+    /// Address check - a callback that sends the address part of the
+    /// message, expects a bool if the function is destined for this
+    /// machine.
+    address_check_fn address_check_;
 
     template <size_t N>
     void receive_data(std::array<uint8_t, N>&& message, size_t sz)
@@ -60,27 +104,10 @@ struct SystemContext
         uart_msg_init_(hdr.len + 2);  // Setting the message part
     }
 
-    struct Header
-    {
-        uint16_t id;
-        uint16_t cmd;
-        uint16_t len;
-    };
-
-    struct Payload
-    {
-        Uart_buffer_t payload{};
-        std::span<const uint8_t> crc{};
-    };
+    bool is_our_msg() const { return address_check_(hdr.id); }
 
     Header hdr{};
     Payload msg_data{};
-};
-
-template <typename T>
-concept is_system_context = requires(T const& sys_ctx, uint16_t val)
-{
-    sys_ctx.uart_msg_init(val);
 };
 
 }  // namespace msg
