@@ -39,12 +39,18 @@ struct MainMachine
                 ctx.receive_data(std::move(ev.data_), ev.sz);
             };
 
+            auto check_address = [](SysCtx& ctx) {
+                static_cast<void>(ctx);
+                // Only messsages that are destined to us are important
+                return true;
+            };
+
             // clang-format off
         return make_transition_table(
             //-[CurrentState]---|------[Event]-----|---[Guard]----|--[Action]---|--Next State-----
             *MsgInit                                                                  = WaitForHdr
             ,WaitForHdr          + event<EvMsg>                     / set_msg_len     = WaitForMsg
-            ,WaitForMsg         + event<EvMsg>                      / receive_message = WaitForHdr
+            ,WaitForMsg         + event<EvMsg>      [check_address]     / receive_message = WaitForHdr
 
            );
             // clang-format on
