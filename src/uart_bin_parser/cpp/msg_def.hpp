@@ -114,11 +114,11 @@ struct SystemContext
         // We need both the hdr and the message in one array
         // Fortunatly this can be done in sequence
         // The CRC is in network byte order
-        auto crc_vals                      = msg_payload.last<2>();
-        [[maybe_unused]] auto expected_crc = (crc_vals[0] << 8) | (crc_vals[1]);
-        auto crc                           = msg::crc16_single(0xcafe, hdr.id);
-        crc                                = msg::crc16_single(crc, hdr.cmd);
-        crc                                = msg::crc16_single(crc, hdr.len);
+        auto crc_vals     = msg_payload.last<2>();
+        auto expected_crc = (crc_vals[0] << 8) | (crc_vals[1]);
+        auto crc          = msg::crc16_single(0xcafe, hdr.id);
+        crc               = msg::crc16_single(crc, hdr.cmd);
+        crc               = msg::crc16_single(crc, hdr.len);
 
         auto payload = msg_payload.first(msg_payload.size() - 2);
         crc          = crc16_calc(crc, payload.begin(), payload.end());

@@ -45,11 +45,7 @@ struct MainMachine
 
             auto check_crc = [](const auto& ev, SysCtx& ctx) {
                 auto view_data = std::span<const uint8_t>(ev.data_.begin(), ev.sz);
-                ctx.is_correct_crc(view_data);
-
-                // static_cast<void>(ev);
-                // static_cast<void>(ctx);
-                return true;
+                return ctx.is_correct_crc(view_data);
             };
 
             // clang-format off
