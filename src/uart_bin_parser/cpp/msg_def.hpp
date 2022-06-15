@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <span>
 #include "bin_parser.hpp"
+#include "crc16_calc.hpp"
 
 namespace msg
 {
@@ -24,6 +25,9 @@ struct Header
     uint16_t id;
     uint16_t cmd;
     uint16_t len;
+
+    // The size of the header..
+    constexpr static size_t size = sizeof(id) + sizeof(cmd) + sizeof(len);
 };
 
 struct Payload
@@ -98,10 +102,28 @@ struct SystemContext
     {
         uint16_t id_val{};
         size_t from = 0;
-        hdr.id      = bin::create_span(id_val, from, data);
-        hdr.cmd     = bin::create_span(id_val, from, data);
-        hdr.len     = bin::create_span(id_val, from, data);
+        // TODO: This should be using network byte order.
+        hdr.id  = bin::create_span(id_val, from, data);
+        hdr.cmd = bin::create_span(id_val, from, data);
+        hdr.len = bin::create_span(id_val, from, data);
         uart_msg_init_(hdr.len + 2);  // Setting the message part
+    }
+
+    bool is_correct_crc(std::span<const uint8_t> msg_payload) const
+    {
+        // We need both the hdr and the message in one array
+        // Fortunatly this can be done in sequence
+        // The CRC is in network byte order
+        auto crc_vals                      = msg_payload.last<2>();
+        [[maybe_unused]] auto expected_crc = (crc_vals[0] << 8) | (crc_vals[1]);
+        auto crc                           = msg::crc16_single(0xcafe, hdr.id);
+        crc                                = msg::crc16_single(crc, hdr.cmd);
+        crc                                = msg::crc16_single(crc, hdr.len);
+
+        auto payload = msg_payload.first(msg_payload.size() - 2);
+        crc          = crc16_calc(crc, payload.begin(), payload.end());
+
+        return expected_crc == crc;
     }
 
     bool is_our_msg() const { return address_check_(hdr.id); }

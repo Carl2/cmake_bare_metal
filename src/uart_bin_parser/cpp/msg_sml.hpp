@@ -44,18 +44,21 @@ struct MainMachine
             };
 
             auto check_crc = [](const auto& ev, SysCtx& ctx) {
-                static_cast<void>(ev);
-                static_cast<void>(ctx);
+                auto view_data = std::span<const uint8_t>(ev.data_.begin(), ev.sz);
+                ctx.is_correct_crc(view_data);
+
+                // static_cast<void>(ev);
+                // static_cast<void>(ctx);
                 return true;
             };
 
             // clang-format off
         return make_transition_table(
             //-[CurrentState]---|------[Event]-----|---[Guard]----|--[Action]---|--Next State-----
-            *MsgInit                                                                   = WaitForHdr
-            ,WaitForHdr          + event<EvMsg>                      / set_msg_len     = WaitForMsg
+            *MsgInit                                                                     = WaitForHdr
+            ,WaitForHdr          + event<EvMsg>                        / set_msg_len     = WaitForMsg
             ,WaitForMsg   + event<EvMsg> [check_address and check_crc] / receive_message = WaitForHdr
-            ,WaitForMsg          + event<EvMsg>      [not check_address]               = WaitForHdr
+            ,WaitForMsg          + event<EvMsg>      [not check_address]                 = WaitForHdr
 
            );
             // clang-format on

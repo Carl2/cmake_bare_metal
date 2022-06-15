@@ -2,6 +2,7 @@
 #include <string_view>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
+#include "crc16_calc.hpp"
 #include "msg_def.hpp"
 #include "msg_sml.hpp"
 #include "uart_bin_fixture.hpp"
@@ -74,6 +75,31 @@ TEST_F(Uart_comm_test, check_address_test)
         ASSERT_EQ(cb.recv_data.data_span.size(), 0);  // No callback since check
                                                       // address returned false,
                                                       // we ignore the message.
+    }
+}
+
+TEST_F(Uart_comm_test, test_crc)
+{  // clang-format off
+    cb                   = {};
+    msg::Uart_buffer_t hdr_msg = {
+        0xaa, 0xaa,  // Id
+        0x01, 0x00,  // Cmd
+        0x06, 0x00}; // Len
+    msg::Uart_buffer_t pay_msg = {
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, // Payload
+        0x8c,0xed};  //CRC
+    // clang-format on
+    // Send  the header
+    {
+
+        m_sm.new_message(hdr_msg, 6);
+        ASSERT_EQ(cb.recv_irq_sz, 6 + 2);  // Len + CRC
+        ASSERT_EQ(m_sm.ctx_.hdr.len, 0x0006);
+    }
+    // Send the payload
+    {
+        m_sm.new_message(pay_msg, 8);
+        ASSERT_EQ(cb.recv_irq_sz, 6);  // Header length
     }
 }
 

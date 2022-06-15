@@ -10,6 +10,7 @@ include_directories(
 
 set(SRC
   main_test.cpp
+  crc_check.cpp
   )
 
 

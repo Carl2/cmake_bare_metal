@@ -1,18 +1,30 @@
 #pragma once
 #include <array>
+#include <concepts>
 #include <cstdint>
-#include "common.hpp"
+#include <numeric>
+#include <tuple>
+//#include "common.hpp"
 
-/**
- * Initial CRC register value is  0xCAFE (see "Torsk/Marlin/src/crc.cpp" in Torsk repository for
- * details).
- */
+namespace msg
+{
+
+template <typename T>
+concept is_byte_sz = requires(T a)
+{
+    requires sizeof(a) == 1;
+    requires std::integral<T>;
+};
+
+template <typename T>
+concept is_word_sz = requires(T a)
+{
+    requires sizeof(a) == 2;
+    requires std::integral<T>;
+};
+
 static constexpr uint16_t crcRegInit = 0xcafe;
 
-/**
- * The table has been take from Torsk project (see "Torsk/Marlin/src/crc.cpp" in Torsk repository
- * for details)
- */
 static constexpr uint16_t crc16_ph_table[256] = {
     0x0000, 0x1189, 0x2312, 0x329B, 0x4624, 0x57AD, 0x6536, 0x74BF, 0x8C48, 0x9DC1, 0xAF5A, 0xBED3,
     0xCA6C, 0xDBE5, 0xE97E, 0xF8F7, 0x0919, 0x1890, 0x2A0B, 0x3B82, 0x4F3D, 0x5EB4, 0x6C2F, 0x7DA6,
@@ -37,82 +49,38 @@ static constexpr uint16_t crc16_ph_table[256] = {
     0x7787, 0x660E, 0x5495, 0x451C, 0x31A3, 0x202A, 0x12B1, 0x0338, 0xFBCF, 0xEA46, 0xD8DD, 0xC954,
     0xBDEB, 0xAC62, 0x9EF9, 0x8F70};
 
-/**
- * @brief Update provided CRC register using provided data.
- * @details The data should be a contiguous char (signed/unsigned) container.
- * @param[out] crc_reg Reference to CRC register to be updated.
- * @param[in] srcData Reference to contiguous char (signed/unsigned) container to take the data
- * from.
- * @param[in] init When 'true' an initial value (0xcafe) is written to provided register prior to
- * data scanning.
- * @param[in] partially When 'true' the amount of bytes to be scanned are limited by the next
- * parameter, otherwise the whole array is scanned.
- * @param[in] size Scan not more bytes than set by this parameter. Ignored if 'partially' is
- * 'false'.
- * @returns true  - CRC register has been successfully updated.
- *          false - 'size' is more than array size. Nothing is updated in this case.
- */
-template <cellink::common::util::Is_uint8_cont_container T>
-bool crc16_update(uint16_t& crc_reg, const T& srcData, bool init = false, bool partially = false,
-                  std::size_t size = 0)
+namespace
 {
-    if (not partially)
-    {
-        size = srcData.size();
-    }
 
-    if (size > srcData.size())
-    {
-        return false;
-    }
+auto crc_calc = [](uint16_t crc, uint16_t val) {
+    uint16_t new_crc = ((crc << 8) ^ (crc16_ph_table[(crc >> 8) ^ val]));
+    return new_crc;
+};
 
-    const uint8_t* data_p = static_cast<const uint8_t*>(srcData.data());
-    uint16_t crc_tmp      = crc_reg;
+auto conv = [](uint16_t val) {
+    uint8_t high = static_cast<uint8_t>((val & 0xFF00) >> 8);
+    uint8_t low  = static_cast<uint8_t>((val & 0x00FF));
+    return std::make_tuple(high, low);
+};
 
-    if (init)
-    {
-        crc_tmp = crcRegInit;
-    }
+}  // namespace
 
-    for (; size > 0; --size, ++data_p)
-    {
-        crc_tmp = static_cast<uint16_t>((crc_tmp) << 8) ^
-            static_cast<uint16_t>(crc16_ph_table[((crc_tmp) >> 8) ^ (*data_p)]);
-    }
-
-    crc_reg = crc_tmp;
-
-    return true;
+uint16_t crc16_calc(uint16_t crc_init, std::input_iterator auto start,
+                    std::input_iterator auto stop)
+{
+    return std::accumulate(start, stop, crc_init, crc_calc);
 }
 
-bool crc16_update2(uint16_t& crc_reg, const T& srcData, bool init = false, bool partially = false,
-                   std::size_t size = 0)
+uint16_t crc16_single(uint16_t crc_init, is_byte_sz auto val)
 {
-    if (not partially)
-    {
-        size = srcData.size();
-    }
-
-    if (size > srcData.size())
-    {
-        return false;
-    }
-
-    const uint8_t* data_p = static_cast<const uint8_t*>(srcData.data());
-    uint16_t crc_tmp      = crc_reg;
-
-    if (init)
-    {
-        crc_tmp = crcRegInit;
-    }
-
-    for (; size > 0; --size, ++data_p)
-    {
-        crc_tmp = static_cast<uint16_t>((crc_tmp) << 8) ^
-            static_cast<uint16_t>(crc16_ph_table[((crc_tmp) >> 8) ^ (*data_p)]);
-    }
-
-    crc_reg = crc_tmp;
-
-    return true;
+    return crc_calc(crc_init, val);
 }
+
+uint16_t crc16_single(uint16_t crc_init, is_word_sz auto val)
+{
+    auto [high, low] = conv(val);
+    auto crc         = crc_calc(crc_init, low);
+    return crc_calc(crc, high);
+}
+
+}  // namespace msg
