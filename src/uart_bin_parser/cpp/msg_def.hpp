@@ -100,9 +100,9 @@ struct SystemContext
 
     void receive_header(std::span<const uint8_t> data)
     {
-        hdr.id  = bin::convert<uint16_t>(data.begin());
-        hdr.cmd = bin::convert<uint16_t>(data.begin() + 2);
-        hdr.len = bin::convert<uint16_t>(data.begin() + 4);
+        hdr.id  = bin::convert_nbo<uint16_t>(data.begin());
+        hdr.cmd = bin::convert_nbo<uint16_t>(data.begin() + 2);
+        hdr.len = bin::convert_nbo<uint16_t>(data.begin() + 4);
 
         uart_msg_init_(hdr.len + 2);  // Setting the message part
     }
@@ -113,10 +113,11 @@ struct SystemContext
         // Fortunatly this can be done in sequence
         // The CRC is in network byte order
         auto crc_vals     = msg_payload.last<2>();
-        auto expected_crc = (crc_vals[0] << 8) | (crc_vals[1]);
-        auto crc          = msg::crc16_single(0xcafe, hdr.id);
-        crc               = msg::crc16_single(crc, hdr.cmd);
-        crc               = msg::crc16_single(crc, hdr.len);
+        auto expected_crc = bin::convert_nbo<uint16_t>(crc_vals.begin());
+
+        auto crc = msg::crc16_single(0xcafe, hdr.id);
+        crc      = msg::crc16_single(crc, hdr.cmd);
+        crc      = msg::crc16_single(crc, hdr.len);
 
         auto payload = msg_payload.first(msg_payload.size() - 2);
         crc          = crc16_calc(crc, payload.begin(), payload.end());
