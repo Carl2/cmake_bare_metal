@@ -67,7 +67,7 @@ concept is_address_check = requires(F& fn,uint16_t address)
 // clang-format off
 template <std::invocable<uint16_t> message_size_fn_t,
           std::invocable<std::string_view> uart_out_t,
-          std::invocable<std::span<const uint8_t>> data_recv_fn,
+          std::invocable<const msg::Header& , std::span<const uint8_t>> data_recv_fn,
           is_address_check address_check_fn >
 struct SystemContext
 {
@@ -93,7 +93,7 @@ struct SystemContext
 
         msg_data.payload = message;
         std::span<const uint8_t> recv_span(msg_data.payload.begin(), sz);
-        data_recv_fn_(recv_span);
+        data_recv_fn_(hdr, recv_span);
         uart_msg_transmit_("Data Received\n\r");
         uart_msg_init_(HDR_SZ);
     }
