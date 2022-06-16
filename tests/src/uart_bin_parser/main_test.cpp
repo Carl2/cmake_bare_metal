@@ -35,6 +35,9 @@ TEST_F(Uart_comm_test, header_check)
         ASSERT_EQ(cb.recv_irq_sz, 6);  // Set to wait for Header size = 6
         // ASSERT_EQ(cb.recv_data.data_span.size(), 8);
         ASSERT_EQ(cb.address, 0xaaaa);
+        ASSERT_EQ(cb.recv_data.hdr.id, 0xaaaa);
+        ASSERT_EQ(cb.recv_data.hdr.cmd, 0x0001);
+        ASSERT_EQ(cb.recv_data.hdr.len, 0x0006);
         auto cb_iter = cb.recv_data.data_span.begin();
         for (const auto& item : payload | std::ranges::views::take(8))
         {
@@ -61,7 +64,7 @@ TEST_F(Uart_comm_test, check_address_test)
         ASSERT_EQ(cb.recv_data.data_span.size(), 8);
     }
 
-    cb.recv_data.data_span = {};
+    cb = {};
 
     {
         msg::Uart_buffer_t msg2{0x00, 0x01, 0x00, 0x01, 0x00, 0x01};
@@ -75,6 +78,9 @@ TEST_F(Uart_comm_test, check_address_test)
         ASSERT_EQ(cb.recv_data.data_span.size(), 0);  // No callback since check
                                                       // address returned false,
                                                       // we ignore the message.
+        ASSERT_EQ(cb.recv_data.hdr.id, 0);
+        ASSERT_EQ(cb.recv_data.hdr.cmd, 0);
+        ASSERT_EQ(cb.recv_data.hdr.len, 0);
     }
 }
 
@@ -99,6 +105,10 @@ TEST_F(Uart_comm_test, test_crc)
     {
         m_sm.new_message(pay_msg, 8);
         ASSERT_EQ(cb.recv_irq_sz, 6);  // Header length
+        ASSERT_EQ(cb.recv_data.hdr.id, 0xaaaa);
+        ASSERT_EQ(cb.recv_data.hdr.cmd, 1);
+        ASSERT_EQ(cb.recv_data.hdr.len, 6);
+        // Check payload
     }
 }
 

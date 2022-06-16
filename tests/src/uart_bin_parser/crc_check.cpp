@@ -17,6 +17,7 @@ uint16_t crcCalculate16(uint16_t initData, const uint8_t* c_ptr, size_t len)
 
     while (len--)
     {
+        fmt::print("crc: {} val: {}\n", crc, *c);
         crc = ((crc << 8) ^ (msg::crc16_ph_table[((crc >> 8) ^ *c++)]));
     }
 
@@ -24,6 +25,25 @@ uint16_t crcCalculate16(uint16_t initData, const uint8_t* c_ptr, size_t len)
 }
 
 }  // namespace
+
+TEST(message_test, crc16_message)
+{
+    {
+        std::array<uint8_t, 15> arr = {0xaa, 0xaa, 0x00, 0x01, 0x06, 0x00, 0x31, 0x32,
+                                       0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39};
+
+        uint16_t val = msg::crc16_calc(0xcafe, arr.begin(), arr.end());
+        fmt::print("One {:#x}\n", val);
+    }
+
+    {
+        std::array<uint8_t, 11> arr2 = {0x00, 0x01, 0x00, 0x04, 0x00, 0x05,
+                                        0x01, 0x02, 0x03, 0x04, 0x05};
+        uint16_t val                 = msg::crc16_calc(0xcafe, arr2.begin(), arr2.end());
+        uint16_t torsk               = crcCalculate16(0xcafe, arr2.data(), arr2.size());
+        fmt::print("Two {0:#x} = {0} Torsk: {1:#x} \n", val, torsk);
+    }
+}
 
 TEST(crc_test, crc16_test)
 {

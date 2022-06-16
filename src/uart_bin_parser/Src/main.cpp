@@ -70,10 +70,13 @@ auto uart_sync_send = [](std::string_view view) {
     HAL_UART_Transmit(&huart1, buffer.data(), static_cast<uint16_t>(view.size()), 10);
 };
 
-auto receive_message_data = [](std::span<const uint8_t> view) {
+auto receive_message_data = [](const msg::Header& hdr, std::span<const uint8_t> view) {
+    static_cast<void>(hdr);
     msg::Uart_buffer_t buffer;
     memcpy(buffer.data(), view.data(), view.size());
     HAL_UART_Transmit(&huart1, buffer.data(), static_cast<uint16_t>(view.size()), 10);
+    // auto val = cmd_parser(hdr.cmd, view);
+    return view;
 };
 
 auto uart_irq_fn = [](uint16_t sz) {

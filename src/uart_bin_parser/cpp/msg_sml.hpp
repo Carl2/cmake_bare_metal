@@ -34,7 +34,8 @@ struct MainMachine
             };
 
             auto receive_message = [](auto ev, SysCtx& ctx) {
-                ctx.receive_data(std::move(ev.data_), ev.sz);
+                [[maybe_unused]] auto exec_data = ctx.receive_data(std::move(ev.data_), ev.sz);
+                // Send ACK/NACK PACK together with exec_data
             };
 
             auto check_address = [](SysCtx& ctx) {
@@ -45,6 +46,7 @@ struct MainMachine
 
             auto check_crc = [](const auto& ev, SysCtx& ctx) {
                 auto view_data = std::span<const uint8_t>(ev.data_.begin(), ev.sz);
+
                 return ctx.is_correct_crc(view_data);
             };
 

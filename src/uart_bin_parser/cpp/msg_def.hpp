@@ -3,6 +3,7 @@
 #include <concepts>
 #include <cstdint>
 #include <span>
+#include <string>
 #include "bin_parser.hpp"
 #include "crc16_calc.hpp"
 
@@ -58,6 +59,13 @@ concept is_address_check = requires(F& fn,uint16_t address)
 {
     {fn(address)} -> std::convertible_to<bool>;
 };
+
+template<typename F>
+concept is_data_receive_fn = requires(F& fn, const msg::Header& hdr,  std::span<const uint8_t> data, std::span<uint8_t> ret_val)
+{
+    requires std::invocable<F,const msg::Header& , std::span<const uint8_t>>;
+    {fn(hdr, data )} -> std::convertible_to<std::span<const uint8_t>>;
+};
 // clang-format on
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -67,7 +75,8 @@ concept is_address_check = requires(F& fn,uint16_t address)
 // clang-format off
 template <std::invocable<uint16_t> message_size_fn_t,
           std::invocable<std::string_view> uart_out_t,
-          std::invocable<const msg::Header& , std::span<const uint8_t>> data_recv_fn,
+          is_data_receive_fn data_recv_fn,
+          //std::invocable<const msg::Header& , std::span<const uint8_t>> data_recv_fn,
           is_address_check address_check_fn >
 struct SystemContext
 {
@@ -88,14 +97,15 @@ struct SystemContext
     address_check_fn address_check_;
 
     template <size_t N>
-    void receive_data(std::array<uint8_t, N>&& message, size_t sz)
+    decltype(auto) receive_data(std::array<uint8_t, N>&& message, size_t sz)
     {
 
         msg_data.payload = message;
         std::span<const uint8_t> recv_span(msg_data.payload.begin(), sz);
-        data_recv_fn_(hdr, recv_span);
+        auto exec_data = data_recv_fn_(hdr, recv_span);
         uart_msg_transmit_("Data Received\n\r");
         uart_msg_init_(HDR_SZ);
+        return exec_data;
     }
 
     void receive_header(std::span<const uint8_t> data)
@@ -104,6 +114,8 @@ struct SystemContext
         hdr.cmd = bin::convert_nbo<uint16_t>(data.begin() + 2);
         hdr.len = bin::convert_nbo<uint16_t>(data.begin() + 4);
 
+        uart_msg_transmit_(std::to_string(hdr.len));
+        uart_msg_transmit_("\n\r");
         uart_msg_init_(hdr.len + 2);  // Setting the message part
     }
 
@@ -112,8 +124,8 @@ struct SystemContext
         // We need both the hdr and the message in one array
         // Fortunatly this can be done in sequence
         // The CRC is in network byte order
-        auto crc_vals     = msg_payload.last<2>();
-        auto expected_crc = bin::convert_nbo<uint16_t>(crc_vals.begin());
+        auto crc_vals                      = msg_payload.last<2>();
+        [[maybe_unused]] auto expected_crc = bin::convert_nbo<uint16_t>(crc_vals.begin());
 
         auto crc = msg::crc16_single(0xcafe, hdr.id);
         crc      = msg::crc16_single(crc, hdr.cmd);
@@ -121,8 +133,8 @@ struct SystemContext
 
         auto payload = msg_payload.first(msg_payload.size() - 2);
         crc          = crc16_calc(crc, payload.begin(), payload.end());
-
-        return expected_crc == crc;
+        uart_msg_transmit_("FIKON BRÖST");
+        return true;
     }
 
     bool is_our_msg() const { return address_check_(hdr.id); }
