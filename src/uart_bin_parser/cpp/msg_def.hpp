@@ -100,12 +100,10 @@ struct SystemContext
 
     void receive_header(std::span<const uint8_t> data)
     {
-        uint16_t id_val{};
-        size_t from = 0;
-        // TODO: This should be using network byte order.
-        hdr.id  = bin::create_span(id_val, from, data);
-        hdr.cmd = bin::create_span(id_val, from, data);
-        hdr.len = bin::create_span(id_val, from, data);
+        hdr.id  = bin::convert<uint16_t>(data.begin());
+        hdr.cmd = bin::convert<uint16_t>(data.begin() + 2);
+        hdr.len = bin::convert<uint16_t>(data.begin() + 4);
+
         uart_msg_init_(hdr.len + 2);  // Setting the message part
     }
 

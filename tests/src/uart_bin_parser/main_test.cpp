@@ -21,7 +21,7 @@
 TEST_F(Uart_comm_test, header_check)
 {
     // Little endian
-    msg::Uart_buffer_t msg{0xaa, 0xaa, 0x01, 0x00, 0x06, 0x00};
+    msg::Uart_buffer_t msg{0xaa, 0xaa, 0x00, 0x01, 0x00, 0x06};
     m_sm.new_message(msg, msg.size());
 
     ASSERT_EQ(m_sm.ctx_.hdr.id, 0xaaaa);
@@ -49,7 +49,7 @@ TEST_F(Uart_comm_test, check_address_test)
 {
     cb                   = {};
     cb.ret_address_check = true;  // Its true by default..
-    msg::Uart_buffer_t msg{0xaa, 0xaa, 0x01, 0x00, 0x06, 0x00};
+    msg::Uart_buffer_t msg{0xaa, 0xaa, 0x00, 0x01, 0x00, 0x06};
     m_sm.new_message(msg, msg.size());
     ASSERT_EQ(cb.address, 0);
 
@@ -64,7 +64,7 @@ TEST_F(Uart_comm_test, check_address_test)
     cb.recv_data.data_span = {};
 
     {
-        msg::Uart_buffer_t msg2{0x01, 0x00, 0x01, 0x00, 0x01, 0x00};
+        msg::Uart_buffer_t msg2{0x00, 0x01, 0x00, 0x01, 0x00, 0x01};
         cb.ret_address_check = false;  // Now returning false, meaning we should ignore it.
         m_sm.new_message(msg2, msg2.size());
         ASSERT_EQ(cb.recv_irq_sz, 3);  // 1 byte + 2 byte CRC
@@ -83,8 +83,8 @@ TEST_F(Uart_comm_test, test_crc)
     cb                   = {};
     msg::Uart_buffer_t hdr_msg = {
         0xaa, 0xaa,  // Id
-        0x01, 0x00,  // Cmd
-        0x06, 0x00}; // Len
+        0x00,0x01,  // Cmd
+        0x00,0x06}; // Len "0x00 06"
     msg::Uart_buffer_t pay_msg = {
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, // Payload
         0x8c,0xed};  //CRC
