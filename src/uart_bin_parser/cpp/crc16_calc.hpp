@@ -84,7 +84,7 @@ uint16_t crc16_single(uint16_t crc_init, is_byte_sz auto val)
 //       Considering this to be little endian and its not stored in NBO      //
 //   i.e using a 16 bit variable
 ///////////////////////////////////////////////////////////////////////////////
-uint16_t crc16_single(uint16_t crc_init, is_word_sz auto val)
+uint16_t crc16_single_little_endian(uint16_t crc_init, is_word_sz auto val)
 {
     auto [high, low] = conv(val);
     auto crc         = crc_calc(crc_init, high);

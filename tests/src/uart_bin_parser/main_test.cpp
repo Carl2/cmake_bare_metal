@@ -7,8 +7,8 @@
 #include "msg_sml.hpp"
 #include "uart_bin_fixture.hpp"
 //#include "motor/motor_hw.hpp"
+#include <bit>
 #include "bin_parser.hpp"
-
 /*
  using ::testing::_;
  using ::testing::Return;
@@ -20,7 +20,14 @@
 
 TEST_F(Uart_comm_test, header_check)
 {
-    // Little endian
+    if constexpr (std::endian::native == std::endian::big)
+    {
+        fmt::print("Big endian\n");
+    }
+    else
+    {
+        fmt::print("Little endian\n");
+    }
     msg::Uart_buffer_t msg{0xaa, 0xaa, 0x00, 0x01, 0x00, 0x06};
     m_sm.new_message(msg, msg.size());
 
@@ -30,10 +37,10 @@ TEST_F(Uart_comm_test, header_check)
     ASSERT_EQ(cb.recv_irq_sz, 6 + 2);  // Len + CRC
 
     {
-        msg::Uart_buffer_t payload = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x8c, 0xed};
+        msg::Uart_buffer_t payload = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0xf0, 0xc4};
         m_sm.new_message(payload, 8);
         ASSERT_EQ(cb.recv_irq_sz, 6);  // Set to wait for Header size = 6
-        // ASSERT_EQ(cb.recv_data.data_span.size(), 8);
+        ASSERT_EQ(cb.recv_data.data_span.size(), 8);
         ASSERT_EQ(cb.address, 0xaaaa);
         ASSERT_EQ(cb.recv_data.hdr.id, 0xaaaa);
         ASSERT_EQ(cb.recv_data.hdr.cmd, 0x0001);
@@ -57,7 +64,7 @@ TEST_F(Uart_comm_test, check_address_test)
     ASSERT_EQ(cb.address, 0);
 
     {
-        msg::Uart_buffer_t payload = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x8c, 0xed};
+        msg::Uart_buffer_t payload = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0xf0, 0xc4};
         m_sm.new_message(payload, 8);
         ASSERT_EQ(cb.recv_irq_sz, 6);  // Set to wait for Header size = 6
         ASSERT_EQ(cb.address, 0xaaaa);
@@ -93,7 +100,7 @@ TEST_F(Uart_comm_test, test_crc)
         0x00,0x06}; // Len "0x00 06"
     msg::Uart_buffer_t pay_msg = {
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, // Payload
-        0x8c,0xed};  //CRC
+        0xf0, 0xc4};  //CRC
     // clang-format on
     // Send  the header
     {

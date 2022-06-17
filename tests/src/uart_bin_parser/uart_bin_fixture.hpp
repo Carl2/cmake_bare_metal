@@ -29,8 +29,11 @@ namespace
 Callback_values cb{};
 std::array<uint8_t, 4> ret_val = {0x00, 0x00, 0x00, 0x00};
 
-auto uart_irq_fn          = [](uint16_t sz) { cb.recv_irq_sz = sz; };
-auto uart_sync_send       = [](std::string_view view) { cb.sent_data = view; };
+auto uart_irq_fn    = [](uint16_t sz) { cb.recv_irq_sz = sz; };
+auto uart_sync_send = [](std::string_view view) {
+    fmt::print(" {}", view);
+    cb.sent_data = view;
+};
 auto receive_message_data = [](const msg::Header& hdr, std::span<const uint8_t> data) {
     // When a new message is received, this will be switched out.
     // So this data is only valid until a new payload is recieved.

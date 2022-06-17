@@ -28,8 +28,8 @@ uint16_t crcCalculate16(uint16_t initData, const uint8_t* c_ptr, size_t len)
 TEST(message_test, crc16_message)
 {
     {
-        std::array<uint8_t, 12> arr = {0xaa, 0xaa, 0x00, 0x01, 0x06, 0x00,
-                                       0x31, 0x32, 0x33, 0x34, 0x35, 0x36};
+        std::array<uint8_t, 12> arr = {0xaa, 0xaa, 0x00, 0x01, 0x00, 0x06,
+                                       0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
 
         uint16_t val = msg::crc16_calc(0xcafe, arr.begin(), arr.end());
         fmt::print("One {:#x}\n", val);
@@ -120,13 +120,13 @@ TEST(crc, single_test)
     };
 
     {
-        uint16_t val     = 0x3231;  // Little endian ....
+        uint16_t val     = 0x3132;  // Little endian ....
         auto [high, low] = conv(val);
-        auto crc         = msg::crc16_single(0xcafe, low);
-        crc              = msg::crc16_single(crc, high);
+        auto crc         = msg::crc16_single(0xcafe, high);
+        crc              = msg::crc16_single(crc, low);
 
         //  This assumes little endian byte ordered stored in mem
-        auto crc16 = msg::crc16_single(0xcafe, val);
+        auto crc16 = msg::crc16_single_little_endian(0xcafe, val);
 
         auto crc_8 = msg::crc16_single(0xcafe, static_cast<uint8_t>(0x31));
         crc_8      = msg::crc16_single(crc_8, static_cast<uint8_t>(0x32));

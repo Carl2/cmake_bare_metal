@@ -127,23 +127,15 @@ struct SystemContext
         // The CRC is in network byte order
         auto crc_vals     = msg_payload.last<2>();
         auto expected_crc = bin::convert_nbo<uint16_t>(crc_vals.begin());
-        uart_msg_transmit_(std::to_string(expected_crc));
-        uart_msg_transmit_("\n\r");
 
-        auto crc = msg::crc16_single(0xcafe, hdr.id);
-        crc      = msg::crc16_single(crc, hdr.cmd);
-        crc      = msg::crc16_single(crc, hdr.len);
-        uart_msg_transmit_(std::to_string(crc));
-        uart_msg_transmit_("\n\r");
+        auto crc = msg::crc16_single_little_endian(0xcafe, hdr.id);
+        crc      = msg::crc16_single_little_endian(crc, hdr.cmd);
+        crc      = msg::crc16_single_little_endian(crc, hdr.len);
 
         auto payload = msg_payload.first(msg_payload.size() - 2);
         crc          = crc16_calc(crc, payload.begin(), payload.end());
-        uart_msg_transmit_(std::to_string(crc));
-        uart_msg_transmit_("\n\r");
         auto isCrcOk = (crc == expected_crc);
 
-        uart_msg_transmit_((isCrcOk ? "True" : "False"));
-        uart_msg_transmit_("\n\r");
         return isCrcOk;
     }
 
