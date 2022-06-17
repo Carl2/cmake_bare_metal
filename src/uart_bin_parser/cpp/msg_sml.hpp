@@ -25,12 +25,21 @@ struct MainMachine
         constexpr static auto MsgInit    = sml::state<class MsgInit>;
         constexpr static auto WaitForHdr = sml::state<class WaitForHdr>;
         constexpr static auto WaitForMsg = sml::state<class WaitForMsg>;
+        constexpr static auto TimedOut   = sml::state<class TimedOut>;
 
         auto operator()() noexcept
         {
             using namespace sml;
             auto set_msg_len = [this](const auto& ev, SysCtx& ctx) {
                 ctx.receive_header(std::span(ev.data_.begin(), ev.sz));
+            };
+
+            auto start_timer = [this](SysCtx& ctx) {
+                ctx.toggle_timer_fn_(true);
+            };
+
+            auto stop_timer = [this](SysCtx& ctx) {
+                ctx.toggle_timer_fn_(false);
             };
 
             auto receive_message = [](auto ev, SysCtx& ctx) {
@@ -46,8 +55,11 @@ struct MainMachine
 
             auto check_crc = [](const auto& ev, SysCtx& ctx) {
                 auto view_data = std::span<const uint8_t>(ev.data_.begin(), ev.sz);
-
                 return ctx.is_correct_crc(view_data);
+            };
+
+            auto reset_uart = [this](SysCtx& ctx) {
+                ctx.uart_msg_transmit_("msg timed out\n\r");
             };
 
             // clang-format off
@@ -58,6 +70,9 @@ struct MainMachine
             ,WaitForMsg   + event<EvMsg> [check_address and check_crc] / receive_message = WaitForHdr
             ,WaitForMsg          + event<EvMsg>      [not check_address]                 = WaitForHdr
 
+            ,WaitForMsg          + sml::on_entry<_> / start_timer
+            ,WaitForMsg          + event<EvTimeout> / reset_uart                         = WaitForHdr
+            ,WaitForMsg          + sml::on_exit<_>  / stop_timer
            );
             // clang-format on
         }
@@ -75,6 +90,11 @@ struct MainMachine
         // EvMsg ev_msg{};
         // msg_sm_.process_event(EvInit{});
         msg_sm_.process_event(EvMsg{std::move(data), sz});
+    }
+
+    void timeout()
+    {
+        msg_sm_.process_event(EvTimeout{});
     }
 };
 

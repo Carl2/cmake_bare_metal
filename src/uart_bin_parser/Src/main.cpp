@@ -74,7 +74,7 @@ auto receive_message_data = [](const msg::Header& hdr, std::span<const uint8_t> 
     static_cast<void>(hdr);
     msg::Uart_buffer_t buffer;
     memcpy(buffer.data(), view.data(), view.size());
-    HAL_UART_Transmit(&huart1, buffer.data(), static_cast<uint16_t>(view.size()), 10);
+    // HAL_UART_Transmit(&huart1, buffer.data(), static_cast<uint16_t>(view.size()), 10);
     // auto val = cmd_parser(hdr.cmd, view);
     return view;
 };
@@ -93,6 +93,7 @@ auto timer_toggle = [](bool state) -> void {
     if(state) 
     {
         __HAL_TIM_ENABLE(&htim2);
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
     } else {
         __HAL_TIM_DISABLE(&htim2);
     }
@@ -114,9 +115,19 @@ static void MX_USART1_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-auto toggle_pin = []() {
-    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-};
+msg::MainMachine m_sm{msg::SystemContext{uart_irq_fn, uart_sync_send, receive_message_data, check_address, timer_toggle}};
+
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
+{
+    if (htim == &htim2)
+    {
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+        m_sm.timeout();
+        // __HAL_UART_DISABLE_IT();  // something like this!
+        timer_toggle(false);  // disable timer
+    }
+}
 
 
 /* USER CODE END 0 */
@@ -127,10 +138,6 @@ auto toggle_pin = []() {
  */
 int main(void)
 {
-
-    msg::MainMachine m_sm{
-        msg::SystemContext{uart_irq_fn, uart_sync_send, receive_message_data, check_address, timer_toggle}};
-    // v.at(5);
     /* USER CODE BEGIN 1 */
 
     /* USER CODE END 1 */
@@ -166,7 +173,9 @@ int main(void)
     //  start_simple_state_machine(huart1);
     //  char msg[]="Im alive\n\r";
     /* USER CODE END 2 */
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
     timer_toggle(false);  // disable timer
+
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
     while (1)
@@ -180,9 +189,9 @@ int main(void)
             // HAL_UART_Receive_IT(&huart1, uart_data.data(), 1);
         }
 
-        HAL_Delay(1000);
-        toggle_pin();
-        timer_toggle(true);  // enable timer
+        // HAL_Delay(1000);
+        // toggle_pin();
+        // timer_toggle(true);  // enable timer
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
@@ -336,17 +345,6 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
-{
-    if (htim == &htim2)
-    {
-        toggle_pin();
-        timer_toggle(false);  // disable timer
-
-        // bl_sm.process_event(evBlinkTimer{});
-    }
-}
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart)
 {

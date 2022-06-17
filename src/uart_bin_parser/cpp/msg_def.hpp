@@ -49,6 +49,9 @@ struct EvMsg
     size_t sz{};
 };
 
+struct EvTimeout
+{};
+
 ///////////////////////////////////////////////////////////////////////////////
 //                                  Concepts
 //    Primarily used to check the context callback functionality
@@ -140,7 +143,8 @@ struct SystemContext
 
         return isCrcOk;
     }
-
+    
+    
     bool is_our_msg() const { return address_check_(hdr.id); }
 
     Header hdr{};
