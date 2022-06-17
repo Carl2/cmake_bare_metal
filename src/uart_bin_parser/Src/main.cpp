@@ -317,10 +317,16 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+auto toggle_pin = []() {
+    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+};
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 {
     if (htim == &htim2)
     {
+        toggle_pin();
         // bl_sm.process_event(evBlinkTimer{});
     }
 }

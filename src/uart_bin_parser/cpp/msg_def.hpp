@@ -103,7 +103,7 @@ struct SystemContext
         msg_data.payload = message;
         std::span<const uint8_t> recv_span(msg_data.payload.begin(), sz);
         auto exec_data = data_recv_fn_(hdr, recv_span);
-        uart_msg_transmit_("Data Received\n\r");
+        // uart_msg_transmit_("Data Received\n\r");
         uart_msg_init_(HDR_SZ);
         return exec_data;
     }
@@ -114,7 +114,7 @@ struct SystemContext
         hdr.cmd = bin::convert_nbo<uint16_t>(data.begin() + 2);
         hdr.len = bin::convert_nbo<uint16_t>(data.begin() + 4);
 
-        uart_msg_transmit_("HEADER RECEIVED\n\r");
+        // uart_msg_transmit_("HEADER RECEIVED\n\r");
         // uart_msg_transmit_(std::to_string(hdr.len));
         // uart_msg_transmit_("\n\r");
         uart_msg_init_(hdr.len + 2);  // Setting the message part
