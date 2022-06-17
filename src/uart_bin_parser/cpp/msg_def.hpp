@@ -114,8 +114,9 @@ struct SystemContext
         hdr.cmd = bin::convert_nbo<uint16_t>(data.begin() + 2);
         hdr.len = bin::convert_nbo<uint16_t>(data.begin() + 4);
 
-        uart_msg_transmit_(std::to_string(hdr.len));
-        uart_msg_transmit_("\n\r");
+        uart_msg_transmit_("HEADER RECEIVED\n\r");
+        // uart_msg_transmit_(std::to_string(hdr.len));
+        // uart_msg_transmit_("\n\r");
         uart_msg_init_(hdr.len + 2);  // Setting the message part
     }
 
@@ -124,17 +125,26 @@ struct SystemContext
         // We need both the hdr and the message in one array
         // Fortunatly this can be done in sequence
         // The CRC is in network byte order
-        auto crc_vals                      = msg_payload.last<2>();
-        [[maybe_unused]] auto expected_crc = bin::convert_nbo<uint16_t>(crc_vals.begin());
+        auto crc_vals     = msg_payload.last<2>();
+        auto expected_crc = bin::convert_nbo<uint16_t>(crc_vals.begin());
+        uart_msg_transmit_(std::to_string(expected_crc));
+        uart_msg_transmit_("\n\r");
 
         auto crc = msg::crc16_single(0xcafe, hdr.id);
         crc      = msg::crc16_single(crc, hdr.cmd);
         crc      = msg::crc16_single(crc, hdr.len);
+        uart_msg_transmit_(std::to_string(crc));
+        uart_msg_transmit_("\n\r");
 
         auto payload = msg_payload.first(msg_payload.size() - 2);
         crc          = crc16_calc(crc, payload.begin(), payload.end());
-        uart_msg_transmit_("FIKON BRÖST");
-        return true;
+        uart_msg_transmit_(std::to_string(crc));
+        uart_msg_transmit_("\n\r");
+        auto isCrcOk = (crc == expected_crc);
+
+        uart_msg_transmit_((isCrcOk ? "True" : "False"));
+        uart_msg_transmit_("\n\r");
+        return isCrcOk;
     }
 
     bool is_our_msg() const { return address_check_(hdr.id); }
