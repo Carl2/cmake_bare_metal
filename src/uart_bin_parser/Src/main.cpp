@@ -89,6 +89,15 @@ auto check_address = [](uint16_t address) -> bool {
     return true;
 };
 
+auto timer_toggle = [](bool state) -> void {
+    if(state) 
+    {
+        __HAL_TIM_ENABLE(&htim2);
+    } else {
+        __HAL_TIM_DISABLE(&htim2);
+    }
+};
+
 }  // namespace
 
 /* USER CODE END PV */
@@ -105,6 +114,11 @@ static void MX_USART1_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+auto toggle_pin = []() {
+    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+};
+
+
 /* USER CODE END 0 */
 
 /**
@@ -115,7 +129,7 @@ int main(void)
 {
 
     msg::MainMachine m_sm{
-        msg::SystemContext{uart_irq_fn, uart_sync_send, receive_message_data, check_address}};
+        msg::SystemContext{uart_irq_fn, uart_sync_send, receive_message_data, check_address, timer_toggle}};
     // v.at(5);
     /* USER CODE BEGIN 1 */
 
@@ -152,7 +166,7 @@ int main(void)
     //  start_simple_state_machine(huart1);
     //  char msg[]="Im alive\n\r";
     /* USER CODE END 2 */
-
+    timer_toggle(false);  // disable timer
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
     while (1)
@@ -165,6 +179,10 @@ int main(void)
             msg_recv_flag = false;
             // HAL_UART_Receive_IT(&huart1, uart_data.data(), 1);
         }
+
+        HAL_Delay(1000);
+        toggle_pin();
+        timer_toggle(true);  // enable timer
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
@@ -238,7 +256,7 @@ static void MX_TIM2_Init(void)
     htim2.Init.CounterMode       = TIM_COUNTERMODE_UP;
     htim2.Init.Period            = 100000 - 1;
     htim2.Init.ClockDivision     = TIM_CLOCKDIVISION_DIV1;
-    htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+    htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
     if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
     {
         Error_Handler();
@@ -318,15 +336,14 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-auto toggle_pin = []() {
-    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-};
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 {
     if (htim == &htim2)
     {
         toggle_pin();
+        timer_toggle(false);  // disable timer
+
         // bl_sm.process_event(evBlinkTimer{});
     }
 }

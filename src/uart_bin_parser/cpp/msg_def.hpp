@@ -77,7 +77,8 @@ template <std::invocable<uint16_t> message_size_fn_t,
           std::invocable<std::string_view> uart_out_t,
           is_data_receive_fn data_recv_fn,
           //std::invocable<const msg::Header& , std::span<const uint8_t>> data_recv_fn,
-          is_address_check address_check_fn >
+          is_address_check address_check_fn, 
+          std::invocable<bool> toggle_timer_fn>
 struct SystemContext
 {
     // clang-format on
@@ -95,6 +96,7 @@ struct SystemContext
     /// message, expects a bool if the function is destined for this
     /// machine.
     address_check_fn address_check_;
+    toggle_timer_fn  toggle_timer_fn_;
 
     template <size_t N>
     decltype(auto) receive_data(std::array<uint8_t, N>&& message, size_t sz)
