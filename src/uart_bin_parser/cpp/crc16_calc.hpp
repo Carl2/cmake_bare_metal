@@ -65,6 +65,10 @@ auto conv = [](uint16_t val) {
 
 }  // namespace
 
+///////////////////////////////////////////////////////////////////////////////
+//               This is considered to be in Network byte order              //
+// as an continous flow.
+///////////////////////////////////////////////////////////////////////////////
 uint16_t crc16_calc(uint16_t crc_init, std::input_iterator auto start,
                     std::input_iterator auto stop)
 {
@@ -76,11 +80,15 @@ uint16_t crc16_single(uint16_t crc_init, is_byte_sz auto val)
     return crc_calc(crc_init, val);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//       Considering this to be little endian and its not stored in NBO      //
+//   i.e using a 16 bit variable
+///////////////////////////////////////////////////////////////////////////////
 uint16_t crc16_single(uint16_t crc_init, is_word_sz auto val)
 {
     auto [high, low] = conv(val);
-    auto crc         = crc_calc(crc_init, low);
-    return crc_calc(crc, high);
+    auto crc         = crc_calc(crc_init, high);
+    return crc_calc(crc, low);
 }
 
 }  // namespace msg
