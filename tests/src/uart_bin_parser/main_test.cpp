@@ -120,6 +120,33 @@ TEST_F(Uart_comm_test, test_crc)
     }
 }
 
+TEST_F(Uart_comm_test, test_no_payload)
+{  // clang-format off
+    cb                   = {};
+    msg::Uart_buffer_t hdr_msg = {
+        0x00, 0x01,  // Id
+        0x00,0x04,  // Cmd
+        0x00,0x00}; // Len "0x00 00"
+    msg::Uart_buffer_t pay_msg = { // Payload
+        0x23, 0xb8};  //CRC
+    // clang-format on
+    // Send  the header
+    {
+        m_sm.new_message(hdr_msg, 6);
+        ASSERT_EQ(cb.recv_irq_sz, 0 + 2);  // Len + CRC
+        ASSERT_EQ(m_sm.ctx_.hdr.len, 0x0000);
+    }
+    // Send the payload
+    {
+        m_sm.new_message(pay_msg, 2);
+        ASSERT_EQ(cb.recv_irq_sz, 6);  // Header length
+        ASSERT_EQ(cb.recv_data.hdr.id, 0x0001);
+        ASSERT_EQ(cb.recv_data.hdr.cmd, 0x0004);
+        ASSERT_EQ(cb.recv_data.hdr.len, 0x0000);
+        // Check payload
+    }
+}
+
 TEST_F(Uart_comm_test, test_timeout)
 {  // clang-format off
     cb                   = {};
