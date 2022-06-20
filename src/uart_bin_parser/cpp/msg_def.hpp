@@ -87,7 +87,7 @@ struct SystemContext
     // clang-format on
     /// message_size_fn_t - a callback function that
     /// sends the message length to the subscriber.
-    message_size_fn_t uart_msg_init_;
+    message_size_fn_t uart_rx_init_;
     /// uart_out_t - Uart out function, used for debugging.
     /// Will be used to send back information, for example
     /// ack and nack
@@ -101,15 +101,18 @@ struct SystemContext
     address_check_fn address_check_;
     toggle_timer_fn  toggle_timer_fn_;
 
+    void init_rx()
+    {
+        uart_rx_init_(HDR_SZ);
+    }
+
     template <size_t N>
     decltype(auto) receive_data(std::array<uint8_t, N>&& message, size_t sz)
     {
-
         msg_data.payload = message;
         std::span<const uint8_t> recv_span(msg_data.payload.begin(), sz);
         auto exec_data = data_recv_fn_(hdr, recv_span);
-        // uart_msg_transmit_("Data Received\n\r");
-        uart_msg_init_(HDR_SZ);
+        uart_msg_transmit_("DATA RX\n\r");
         return exec_data;
     }
 
@@ -119,10 +122,10 @@ struct SystemContext
         hdr.cmd = bin::convert_nbo<uint16_t>(data.begin() + 2);
         hdr.len = bin::convert_nbo<uint16_t>(data.begin() + 4);
 
-        // uart_msg_transmit_("HEADER RECEIVED\n\r");
+        // uart_msg_transmit_("HEADER RX\n\r");
         // uart_msg_transmit_(std::to_string(hdr.len));
         // uart_msg_transmit_("\n\r");
-        uart_msg_init_(hdr.len + 2);  // Setting the message part
+        uart_rx_init_(hdr.len + 2);  // Setting the message part
     }
 
     bool is_correct_crc(std::span<const uint8_t> msg_payload) const

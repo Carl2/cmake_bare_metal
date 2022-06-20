@@ -74,14 +74,23 @@ auto receive_message_data = [](const msg::Header& hdr, std::span<const uint8_t> 
     static_cast<void>(hdr);
     msg::Uart_buffer_t buffer;
     memcpy(buffer.data(), view.data(), view.size());
-    // HAL_UART_Transmit(&huart1, buffer.data(), static_cast<uint16_t>(view.size()), 10);
+    HAL_UART_Transmit(&huart1, buffer.data(), static_cast<uint16_t>(view.size()), 10);
     // auto val = cmd_parser(hdr.cmd, view);
     return view;
 };
 
+auto abort_uart_rx = []() -> void {
+    HAL_UART_AbortReceive(&huart1);
+};
+
 auto uart_irq_fn = [](uint16_t sz) {
     // TODO: Need to check that size is reasonable.
-    HAL_UART_Receive_IT(&huart1, uart_data.data(), sz);
+    abort_uart_rx();  // We can always abort if we come here
+    auto ready = HAL_UART_Receive_IT(&huart1, uart_data.data(), sz);
+    if (ready == HAL_BUSY)
+    {
+        uart_sync_send("busy\r\n");
+    }
 };
 
 auto check_address = [](uint16_t address) -> bool {
@@ -96,6 +105,7 @@ auto timer_toggle = [](bool state) -> void {
         HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
     } else {
         __HAL_TIM_DISABLE(&htim2);
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
     }
 };
 
@@ -124,7 +134,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
     {
         HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
         m_sm.timeout();
-        // __HAL_UART_DISABLE_IT();  // something like this!
         timer_toggle(false);  // disable timer
     }
 }
@@ -263,7 +272,7 @@ static void MX_TIM2_Init(void)
     htim2.Instance               = TIM2;
     htim2.Init.Prescaler         = 84 - 1;
     htim2.Init.CounterMode       = TIM_COUNTERMODE_UP;
-    htim2.Init.Period            = 100000 - 1;
+    htim2.Init.Period            = 200000 - 1;
     htim2.Init.ClockDivision     = TIM_CLOCKDIVISION_DIV1;
     htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
     if (HAL_TIM_Base_Init(&htim2) != HAL_OK)

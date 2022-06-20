@@ -18,14 +18,14 @@ struct MainMachine
 
     MainMachine(SysCtx&& ctx) : ctx_{ctx}, msg_sm_{MsgMachine{}, ctx_} {}
 
+    constexpr static auto WaitForHdr = sml::state<class WaitForHdr>;
+    constexpr static auto WaitForMsg = sml::state<class WaitForMsg>;
+
     struct MsgMachine
     {
         using self = MsgMachine;
 
         constexpr static auto MsgInit    = sml::state<class MsgInit>;
-        constexpr static auto WaitForHdr = sml::state<class WaitForHdr>;
-        constexpr static auto WaitForMsg = sml::state<class WaitForMsg>;
-        constexpr static auto TimedOut   = sml::state<class TimedOut>;
 
         auto operator()() noexcept
         {
@@ -58,21 +58,25 @@ struct MainMachine
                 return ctx.is_correct_crc(view_data);
             };
 
-            auto reset_uart = [this](SysCtx& ctx) {
-                ctx.uart_msg_transmit_("msg timed out\n\r");
+            auto init_rx = [this](SysCtx& ctx) {
+                ctx.init_rx();
+            };
+
+            auto dbg_timedout = [this](SysCtx& ctx) {
+                ctx.uart_msg_transmit_("timed out");
             };
 
             // clang-format off
         return make_transition_table(
             //-[CurrentState]---|------[Event]-----|---[Guard]----|--[Action]---|--Next State-----
-            *MsgInit                                                                     = WaitForHdr
-            ,WaitForHdr          + event<EvMsg>                        / set_msg_len     = WaitForMsg
-            ,WaitForMsg   + event<EvMsg> [check_address and check_crc] / receive_message = WaitForHdr
-            ,WaitForMsg          + event<EvMsg>      [not check_address]                 = WaitForHdr
-
+            *MsgInit                                                                         = WaitForHdr
+            ,WaitForHdr          + event<EvMsg>                        / set_msg_len         = WaitForMsg
+            ,WaitForMsg   + event<EvMsg> [check_address and check_crc] / receive_message     = WaitForHdr
+            ,WaitForMsg          + event<EvMsg>      [not check_address]                     = WaitForHdr
+            // ------------------------------------------------------------------------------------
             ,WaitForMsg          + sml::on_entry<_> / start_timer
-            ,WaitForMsg          + event<EvTimeout> / reset_uart                         = WaitForHdr
-            ,WaitForMsg          + sml::on_exit<_>  / stop_timer
+            ,WaitForMsg          + event<EvTimeout> / dbg_timedout                           = WaitForHdr
+            ,WaitForMsg          + sml::on_exit<_>  / (init_rx, stop_timer)
            );
             // clang-format on
         }
@@ -95,6 +99,16 @@ struct MainMachine
     void timeout()
     {
         msg_sm_.process_event(EvTimeout{});
+    }
+
+    bool is_wait4header() const
+    {
+        return msg_sm_.is(WaitForHdr);
+    }
+
+    bool is_wait4msg() const
+    {
+        return msg_sm_.is(WaitForMsg);
     }
 };
 

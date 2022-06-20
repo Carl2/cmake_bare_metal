@@ -88,6 +88,7 @@ TEST_F(Uart_comm_test, check_address_test)
         ASSERT_EQ(cb.recv_data.hdr.id, 0);
         ASSERT_EQ(cb.recv_data.hdr.cmd, 0);
         ASSERT_EQ(cb.recv_data.hdr.len, 0);
+
     }
 }
 
@@ -118,6 +119,85 @@ TEST_F(Uart_comm_test, test_crc)
         // Check payload
     }
 }
+
+TEST_F(Uart_comm_test, test_timeout)
+{  // clang-format off
+    cb                   = {};
+    msg::Uart_buffer_t hdr_msg = {
+        0xaa, 0xaa,  // Id
+        0x00,0x01,  // Cmd
+        0x00,0x06}; // Len "0x00 06"
+    msg::Uart_buffer_t pay_msg = {
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, // Payload
+        0xf0, 0xc4};  //CRC
+    // clang-format on
+    // Send  the header
+    {
+        m_sm.new_message(hdr_msg, 6);
+        ASSERT_EQ(cb.recv_irq_sz, 6 + 2);  // Len + CRC
+        ASSERT_EQ(m_sm.ctx_.hdr.len, 0x0006);
+    }
+
+    // Timeout
+    {
+        m_sm.timeout();
+        ASSERT_TRUE(m_sm.is_wait4header());
+    }
+
+    // Send  the header
+    {
+        m_sm.new_message(hdr_msg, 6);
+        ASSERT_EQ(cb.recv_irq_sz, 6 + 2);  // Len + CRC
+        ASSERT_EQ(m_sm.ctx_.hdr.len, 0x0006);
+    }
+
+    ASSERT_TRUE(m_sm.is_wait4msg());
+
+    // Send the payload
+    {
+        m_sm.new_message(pay_msg, 8);
+        ASSERT_EQ(cb.recv_irq_sz, 6);  // Header length
+        ASSERT_EQ(cb.recv_data.hdr.id, 0xaaaa);
+        ASSERT_EQ(cb.recv_data.hdr.cmd, 1);
+        ASSERT_EQ(cb.recv_data.hdr.len, 6);
+        // Check payload
+    }
+}
+
+TEST_F(Uart_comm_test, test_timeout2)
+{  // clang-format off
+    cb                   = {};
+    msg::Uart_buffer_t hdr_msg = {
+        0xaa, 0xaa,  // Id
+        0x00,0x01,  // Cmd
+        0x00,0x08}; // Len "0x00 08"
+    msg::Uart_buffer_t pay_msg = {
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, // Payload only 7 bytes
+        0xf0, 0xc4};  //CRC
+    // clang-format on
+    // Send  the header
+    {
+        m_sm.new_message(hdr_msg, 8);
+        ASSERT_EQ(cb.recv_irq_sz, 8 + 2);  // Len + CRC
+        ASSERT_EQ(m_sm.ctx_.hdr.len, 0x0008);
+    }
+
+    // Send the short payload and timeout
+    {
+        m_sm.new_message(pay_msg, 7+2);
+        m_sm.timeout();
+        ASSERT_TRUE(m_sm.is_wait4header());
+    }
+
+    // We can receive the header again
+    {
+        m_sm.new_message(hdr_msg, 8);
+        ASSERT_EQ(cb.recv_irq_sz, 8 + 2);  // Len + CRC
+        ASSERT_EQ(m_sm.ctx_.hdr.len, 0x0008);
+        ASSERT_TRUE(m_sm.is_wait4msg());
+    }
+}
+
 
 int main(int argc, char* argv[])
 {
