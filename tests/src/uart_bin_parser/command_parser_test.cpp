@@ -23,10 +23,12 @@ auto callback = [](msg::OptArgs args, auto start_iter, auto end_iter) {
 };
 
 auto callback_copy = [](msg::OptArgs args, auto start_iter, auto end_iter) {
+    // static_cast<void>(start_iter);
+    static_cast<void>(end_iter);
     if (args)
     {
-        auto arg_array = *args;
-        std::copy(start_iter, end_iter, arg_array.begin());
+        auto span = *args;
+        std::copy(span.begin(), span.begin() + span.size(), start_iter);
     }
 };
 
@@ -67,13 +69,18 @@ TEST(Cmd_parser, GuppiProtocol_find)
             ASSERT_EQ(item, last);
         }
     }
-    // std::array<uint8_t, 16> args = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-    //                                 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+    std::array<uint8_t, 16> args = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                                    0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
     {
-        // msg::RetType ret_buff{};
-        // exec_cmd(cmds, CmdNr::CMD_DISABLE_ADDRESS_SETUP, args, ret_buff.begin(),
-        //          ret_buff.begin() + args.size());
-    }
+        msg::RetType ret_buff{};
+        exec_cmd(cmds, CmdNr::CMD_SET_PRINTHEAD_ADDRESS, args, ret_buff.begin(),
+                 ret_buff.begin() + args.size());
+
+        for (const auto& item : ret_buff)
+        {
+            fmt::print("{}\n", item);
+        }
+    };
 }
 
 // }
