@@ -12,13 +12,22 @@ namespace
 {
 OptArgs last_arg;
 
-auto enable_address = [](msg::OptArgs args, auto& retBuffer) {
-    last_arg     = args;
-    retBuffer[0] = 0x01;
+auto callback = [](msg::OptArgs args, auto start_iter, auto end_iter) {
+    uint8_t last{};
+    auto add_2 = [&last](uint8_t& val) {
+        val  = last + 2;
+        last = val;
+    };
+    std::for_each(start_iter, end_iter, add_2);
+    last_arg = args;
 };
-auto alt_callback = [](msg::OptArgs args, auto& retBuffer) {
-    last_arg     = args;
-    retBuffer[0] = 0xff;
+
+auto callback_copy = [](msg::OptArgs args, auto start_iter, auto end_iter) {
+    if (args)
+    {
+        auto arg_array = *args;
+        std::copy(start_iter, end_iter, arg_array.begin());
+    }
 };
 
 }  // namespace
@@ -30,9 +39,9 @@ TEST(Cmd_parser, GuppiCmdProtocol_create)
 
     // clang-format off
     constexpr  auto  cmds = make_Guppi_protocol(
-        make_cmd_item<CmdNr::CMD_ENABLE_ADDRESS_SETUP>(enable_address),
-        make_cmd_item<CmdNr::CMD_DISABLE_ADDRESS_SETUP>(enable_address),
-        make_cmd_item<CmdNr::CMD_SET_PRINTHEAD_ADDRESS>(alt_callback)
+        make_cmd_item<CmdNr::CMD_ENABLE_ADDRESS_SETUP>(callback),
+        make_cmd_item<CmdNr::CMD_DISABLE_ADDRESS_SETUP>(callback),
+        make_cmd_item<CmdNr::CMD_SET_PRINTHEAD_ADDRESS>(callback)
                          );
     // clang-format on
 
@@ -41,30 +50,30 @@ TEST(Cmd_parser, GuppiCmdProtocol_create)
 
 TEST(Cmd_parser, GuppiProtocol_find)
 {
-
     constexpr auto cmds =
-        make_Guppi_protocol(make_cmd_item<CmdNr::CMD_ENABLE_ADDRESS_SETUP>(enable_address),
-                            make_cmd_item<CmdNr::CMD_DISABLE_ADDRESS_SETUP>(alt_callback),
-                            make_cmd_item<CmdNr::CMD_SET_PRINTHEAD_ADDRESS>(alt_callback));
+        make_Guppi_protocol(make_cmd_item<CmdNr::CMD_ENABLE_ADDRESS_SETUP>(callback),
+                            make_cmd_item<CmdNr::CMD_DISABLE_ADDRESS_SETUP>(callback),
+                            make_cmd_item<CmdNr::CMD_SET_PRINTHEAD_ADDRESS>(callback_copy));
 
-    // ASSERT_EQ(std::tuple_size<decltype(cmds)>(), 3);
-    [[maybe_unused]] std::array<uint8_t, 16> args = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
-                                                     0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
-                                                     0x0c, 0x0d, 0x0e, 0x0f};
     {
         msg::RetType ret_buff{};
-        exec_cmd(cmds, CmdNr::CMD_DISABLE_ADDRESS_SETUP, {}, ret_buff);
+        exec_cmd(cmds, CmdNr::CMD_DISABLE_ADDRESS_SETUP, {}, ret_buff.begin(), ret_buff.end());
 
-        // auto out_arr = std::get<my_ret_type>(output);
-        // fmt::print("size: {}\n", out_arr.size());
+        uint8_t last{};
+        for (const auto& item : ret_buff)
+        {
+            auto val = last + 2;
+            last     = val;
+            ASSERT_EQ(item, last);
+        }
     }
-
+    // std::array<uint8_t, 16> args = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+    //                                 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
     {
-
-        //    Arg1: Commands tuple , arg2: Commmand , argument
-        // auto output = exec_cmd(cmds, CmdNr::CMD_ENABLE_ADDRESS_SETUP, {});
-
-        // auto out = std::get<uint8_t>(output);
-        // fmt::print("size: {}\n", out);
+        // msg::RetType ret_buff{};
+        // exec_cmd(cmds, CmdNr::CMD_DISABLE_ADDRESS_SETUP, args, ret_buff.begin(),
+        //          ret_buff.begin() + args.size());
     }
 }
+
+// }
