@@ -11,6 +11,7 @@ include_directories(
 set(SRC
   main_test.cpp
   crc_check.cpp
+  command_parser_test.cpp
   )
 
 
