@@ -26,8 +26,7 @@ constexpr decltype(auto) tuple_for_each(Tuple tpl, MatchFN_t match_fn, OptArgs&&
                                         Iter start_in, Iter end_in, std::index_sequence<Is...>)
 {
 
-    // size_t index{};
-    auto f_single = [match_fn, args, start_in, end_in](auto single) mutable {
+    auto f_single = [match_fn, args, start_in, end_in](auto single) {
         if (match_fn(single.CmdNum))
         {
             single.callbackFn_(args, start_in, end_in);

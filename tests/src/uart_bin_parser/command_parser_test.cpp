@@ -23,7 +23,6 @@ auto callback = [](msg::OptArgs args, auto start_iter, auto end_iter) {
 };
 
 auto callback_copy = [](msg::OptArgs args, auto start_iter, auto end_iter) {
-    // static_cast<void>(start_iter);
     static_cast<void>(end_iter);
     if (args)
     {
@@ -76,9 +75,9 @@ TEST(Cmd_parser, GuppiProtocol_find)
         exec_cmd(cmds, CmdNr::CMD_SET_PRINTHEAD_ADDRESS, args, ret_buff.begin(),
                  ret_buff.begin() + args.size());
 
-        for (const auto& item : ret_buff)
+        for (size_t i = 0; i < args.size(); ++i)
         {
-            fmt::print("{}\n", item);
+            ASSERT_EQ(ret_buff[i], args[i]);
         }
     };
 }
