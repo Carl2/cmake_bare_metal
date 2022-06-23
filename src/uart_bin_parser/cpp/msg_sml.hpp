@@ -30,24 +30,26 @@ struct MainMachine
         auto operator()() noexcept
         {
             using namespace sml;
-            auto set_msg_len = [this](const auto& ev, SysCtx& ctx) {
+            auto process_hdr = [](const auto& ev, SysCtx& ctx) {
                 ctx.receive_header(std::span(ev.data_.begin(), ev.sz));
             };
 
-            auto start_timer = [this](SysCtx& ctx) {
-                ctx.toggle_timer_fn_(true);
-            };
-
-            auto stop_timer = [this](SysCtx& ctx) {
-                ctx.toggle_timer_fn_(false);
-            };
-
-            auto receive_message = [](auto ev, SysCtx& ctx) {
+            auto process_body = [](auto ev, SysCtx& ctx) {
                 [[maybe_unused]] auto exec_data = ctx.receive_data(std::move(ev.data_), ev.sz);
                 // Send ACK/NACK PACK together with exec_data
             };
 
-            auto check_address = [](SysCtx& ctx) {
+            auto start_timer = [](SysCtx& ctx) {
+                ctx.toggle_timer_fn_(true);
+                // ctx.uart_msg_transmit_("start timer\r\n");
+            };
+
+            auto stop_timer = [](SysCtx& ctx) {
+                ctx.toggle_timer_fn_(false);
+                // ctx.uart_msg_transmit_("stop timer\r\n");
+            };
+
+            auto check_addr = [](SysCtx& ctx) {
                 static_cast<void>(ctx);
                 // Only messsages that are destined to us are important
                 return ctx.is_our_msg();
@@ -58,25 +60,31 @@ struct MainMachine
                 return ctx.is_correct_crc(view_data);
             };
 
-            auto init_rx = [this](SysCtx& ctx) {
+            auto init_hdr_rx = [](SysCtx& ctx) {
                 ctx.init_rx();
             };
 
-            auto dbg_timedout = [this](SysCtx& ctx) {
-                ctx.uart_msg_transmit_("timed out");
+            auto reset_rx = [](SysCtx& ctx) {
+                ctx.abort_uart_rx_();
+                // ctx.uart_msg_transmit_("abort rx\r\n");
+            };
+
+            auto handle_timeout = [](SysCtx& ctx) {
+                ctx.uart_msg_transmit_("timed out\r\n");
             };
 
             // clang-format off
         return make_transition_table(
             //-[CurrentState]---|------[Event]-----|---[Guard]----|--[Action]---|--Next State-----
             *MsgInit                                                                         = WaitForHdr
-            ,WaitForHdr          + event<EvMsg>                        / set_msg_len         = WaitForMsg
-            ,WaitForMsg   + event<EvMsg> [check_address and check_crc] / receive_message     = WaitForHdr
-            ,WaitForMsg          + event<EvMsg>      [not check_address]                     = WaitForHdr
+            ,WaitForHdr          + event<EvMsg>                        / process_hdr         = WaitForMsg
+            ,WaitForMsg   + event<EvMsg> [check_addr and check_crc]    / process_body        = WaitForHdr
+            ,WaitForMsg          + event<EvMsg>    [not check_addr]                          = WaitForHdr
             // ------------------------------------------------------------------------------------
+            ,WaitForHdr          + sml::on_entry<_> / init_hdr_rx
             ,WaitForMsg          + sml::on_entry<_> / start_timer
-            ,WaitForMsg          + event<EvTimeout> / dbg_timedout                           = WaitForHdr
-            ,WaitForMsg          + sml::on_exit<_>  / (init_rx, stop_timer)
+            ,WaitForMsg          + event<EvTimeout> / (handle_timeout, reset_rx)             = WaitForHdr
+            ,WaitForMsg          + sml::on_exit<_>  / stop_timer
            );
             // clang-format on
         }

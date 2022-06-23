@@ -80,7 +80,8 @@ template <std::invocable<uint16_t> message_size_fn_t,
           std::invocable<std::string_view> uart_out_t,
           is_data_receive_fn data_recv_fn,
           //std::invocable<const msg::Header& , std::span<const uint8_t>> data_recv_fn,
-          is_address_check address_check_fn, 
+          is_address_check address_check_fn,
+          std::invocable<> abort_rx_fn,
           std::invocable<bool> toggle_timer_fn>
 struct SystemContext
 {
@@ -99,6 +100,7 @@ struct SystemContext
     /// message, expects a bool if the function is destined for this
     /// machine.
     address_check_fn address_check_;
+    abort_rx_fn      abort_uart_rx_;
     toggle_timer_fn  toggle_timer_fn_;
 
     void init_rx()
@@ -112,7 +114,7 @@ struct SystemContext
         msg_data.payload = message;
         std::span<const uint8_t> recv_span(msg_data.payload.begin(), sz);
         auto exec_data = data_recv_fn_(hdr, recv_span);
-        uart_msg_transmit_("DATA RX\n\r");
+        uart_msg_transmit_("body received\n\r");
         return exec_data;
     }
 

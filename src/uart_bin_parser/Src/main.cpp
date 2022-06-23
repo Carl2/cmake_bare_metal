@@ -85,11 +85,10 @@ auto abort_uart_rx = []() -> void {
 
 auto uart_irq_fn = [](uint16_t sz) {
     // TODO: Need to check that size is reasonable.
-    abort_uart_rx();  // We can always abort if we come here
     auto ready = HAL_UART_Receive_IT(&huart1, uart_data.data(), sz);
     if (ready == HAL_BUSY)
     {
-        uart_sync_send("busy\r\n");
+        Error_Handler();
     }
 };
 
@@ -102,10 +101,8 @@ auto timer_toggle = [](bool state) -> void {
     if(state) 
     {
         __HAL_TIM_ENABLE(&htim2);
-        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
     } else {
         __HAL_TIM_DISABLE(&htim2);
-        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
     }
 };
 
@@ -125,14 +122,12 @@ static void MX_USART1_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-msg::MainMachine m_sm{msg::SystemContext{uart_irq_fn, uart_sync_send, receive_message_data, check_address, timer_toggle}};
-
+msg::MainMachine m_sm{msg::SystemContext{uart_irq_fn, uart_sync_send, receive_message_data, check_address, abort_uart_rx, timer_toggle}};
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 {
     if (htim == &htim2)
     {
-        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
         m_sm.timeout();
         timer_toggle(false);  // disable timer
     }
@@ -197,10 +192,6 @@ int main(void)
             msg_recv_flag = false;
             // HAL_UART_Receive_IT(&huart1, uart_data.data(), 1);
         }
-
-        // HAL_Delay(1000);
-        // toggle_pin();
-        // timer_toggle(true);  // enable timer
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
@@ -380,6 +371,7 @@ void Error_Handler(void)
 {
     /* USER CODE BEGIN Error_Handler_Debug */
     /* User can add his own implementation to report the HAL error return state */
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
     __disable_irq();
     while (1)
     {}

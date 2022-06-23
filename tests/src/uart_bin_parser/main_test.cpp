@@ -28,18 +28,19 @@ TEST_F(Uart_comm_test, header_check)
     {
         fmt::print("Little endian\n");
     }
-    msg::Uart_buffer_t msg{0xaa, 0xaa, 0x00, 0x01, 0x00, 0x06};
+    uint8_t len = 0x06;
+    msg::Uart_buffer_t msg{0xaa, 0xaa, 0x00, 0x01, 0x00, len};
     m_sm.new_message(msg, msg.size());
 
     ASSERT_EQ(m_sm.ctx_.hdr.id, 0xaaaa);
     ASSERT_EQ(m_sm.ctx_.hdr.cmd, 0x0001);
     ASSERT_EQ(m_sm.ctx_.hdr.len, 0x0006);
-    ASSERT_EQ(cb.recv_irq_sz, 6 + 2);  // Len + CRC
+    ASSERT_EQ(cb.recv_irq_sz, len + 2);  // Len + CRC
 
     {
         msg::Uart_buffer_t payload = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0xf0, 0xc4};
-        m_sm.new_message(payload, 8);
-        ASSERT_EQ(cb.recv_irq_sz, 6);  // Set to wait for Header size = 6
+        m_sm.new_message(payload, len + 2);
+        ASSERT_EQ(cb.recv_irq_sz, msg::HDR_SZ);  // Check reset to wait for Header
         ASSERT_EQ(cb.recv_data.data_span.size(), 8);
         ASSERT_EQ(cb.address, 0xaaaa);
         ASSERT_EQ(cb.recv_data.hdr.id, 0xaaaa);
@@ -60,15 +61,15 @@ TEST_F(Uart_comm_test, check_address_test)
     cb                   = {};
     cb.ret_address_check = true;  // Its true by default..
     msg::Uart_buffer_t msg{0xaa, 0xaa, 0x00, 0x01, 0x00, 0x06};
-    m_sm.new_message(msg, msg.size());
-    ASSERT_EQ(cb.address, 0);
+    m_sm.new_message(msg, msg::HDR_SZ);
+    ASSERT_EQ(cb.address, 0);  // to show that address check happens not when the header is received, but when the body arrives
 
     {
         msg::Uart_buffer_t payload = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0xf0, 0xc4};
-        m_sm.new_message(payload, 8);
-        ASSERT_EQ(cb.recv_irq_sz, 6);  // Set to wait for Header size = 6
-        ASSERT_EQ(cb.address, 0xaaaa);
+        m_sm.new_message(payload, 8);  // len(body) + crc
+        ASSERT_EQ(cb.address, 0xaaaa); // Now we have the address (see comment above)
         ASSERT_EQ(cb.recv_data.data_span.size(), 8);
+        ASSERT_EQ(cb.recv_irq_sz, msg::HDR_SZ);  // Check reset to wait for Header
     }
 
     cb = {};
@@ -79,6 +80,7 @@ TEST_F(Uart_comm_test, check_address_test)
         m_sm.new_message(msg2, msg2.size());
         ASSERT_EQ(cb.recv_irq_sz, 3);  // 1 byte + 2 byte CRC
     }
+
     {
         msg::Uart_buffer_t payload2{0x01, 0xa1, 0xa2};
         m_sm.new_message(payload2, payload2.size());
@@ -88,7 +90,8 @@ TEST_F(Uart_comm_test, check_address_test)
         ASSERT_EQ(cb.recv_data.hdr.id, 0);
         ASSERT_EQ(cb.recv_data.hdr.cmd, 0);
         ASSERT_EQ(cb.recv_data.hdr.len, 0);
-
+        ASSERT_TRUE(m_sm.is_wait4header());
+        ASSERT_EQ(cb.recv_irq_sz, msg::HDR_SZ);  // Check reset to wait for Header
     }
 }
 
@@ -169,6 +172,7 @@ TEST_F(Uart_comm_test, test_timeout)
     {
         m_sm.timeout();
         ASSERT_TRUE(m_sm.is_wait4header());
+        ASSERT_EQ(cb.recv_irq_sz, msg::HDR_SZ);  // Check reset to wait for Header
     }
 
     // Send  the header

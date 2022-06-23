@@ -50,17 +50,22 @@ auto check_address = [](uint16_t address) {
 auto tim_toggle = [](bool state) {
     static_cast<void>(state);
 };
+
+auto abort_rx = []() {
+    cb.recv_irq_sz = 0;
+};
+
 }  // namespace
 
 using sysctx_t = msg::SystemContext<decltype(uart_irq_fn), decltype(uart_sync_send),
-                                    decltype(receive_message_data), decltype(check_address), decltype(tim_toggle)>;
+                                    decltype(receive_message_data), decltype(check_address), decltype(abort_rx), decltype(tim_toggle)>;
 
 class Uart_comm_test : public ::testing::Test
 {
  protected:
     Uart_comm_test() {}
 
-    sysctx_t ctx{uart_irq_fn, uart_sync_send, receive_message_data, check_address, tim_toggle};
+    sysctx_t ctx{uart_irq_fn, uart_sync_send, receive_message_data, check_address, abort_rx, tim_toggle};
 
     msg::MainMachine<sysctx_t> m_sm{std::move(ctx)};
     //     msg::SystemContext};
