@@ -29,4 +29,7 @@ TEST(address_setup_test, init)
         exec_cmd(cmds, msg::GuppiCmd::CMD_ENABLE_ADDRESS_SETUP, {}, ret_buff.begin(),
                  ret_buff.end());
     }
+
+    address_sm.enable_address_setup();
+    address_sm.disable_address_setup();
 }
