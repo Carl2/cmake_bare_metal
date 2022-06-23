@@ -21,6 +21,8 @@
 #include "main.h"
 #include <array>
 #include <string_view>
+#include "address/address_setup_com.hpp"
+#include "command_handler.hpp"
 #include "msg_def.hpp"
 #include "msg_sml.hpp"
 /* Private includes ----------------------------------------------------------*/
@@ -53,6 +55,7 @@ namespace
 {
 
 msg::Uart_buffer_t uart_data;
+// uart::AddressSetup address_sm{uart::AddressContext{}};
 
 struct Receive_data
 {
@@ -70,11 +73,33 @@ auto uart_sync_send = [](std::string_view view) {
     HAL_UART_Transmit(&huart1, buffer.data(), static_cast<uint16_t>(view.size()), 10);
 };
 
+// Setting up Address statemachine
+// TODO: This should be moved to some other nice place.
+// uart::AddressContext addr_ctx{uart_sync_send};
+// auto address_sm         = uart::AddressSetup<decltype(addr_ctx)>{std::move(addr_ctx)};
+auto address_sm = uart::AddressSetup{uart::AddressContext{uart_sync_send}};
+// auto address_setup_item = msg::make_cmd_item<msg::GuppiCmd::CMD_ENABLE_ADDRESS_SETUP>(
+//     uart::get_address_setup_callback(address_sm));
+// clang-format off
+auto cmds = msg::make_Guppi_protocol(
+    msg::make_cmd_item<msg::GuppiCmd::CMD_ENABLE_ADDRESS_SETUP>(
+        uart::get_address_setup_callback(address_sm)),
+    msg::make_cmd_item<msg::GuppiCmd::CMD_DISABLE_ADDRESS_SETUP>(
+        uart::get_disable_address_setup_callback(address_sm))
+
+                                     );
+// clang-format on
+
 auto receive_message_data = [](const msg::Header& hdr, std::span<const uint8_t> view) {
     static_cast<void>(hdr);
     msg::Uart_buffer_t buffer;
+    msg::RetType ret_buff{};
+    exec_cmd(cmds, msg::GuppiCmd::CMD_ENABLE_ADDRESS_SETUP, {}, ret_buff.begin(), ret_buff.end());
     memcpy(buffer.data(), view.data(), view.size());
     HAL_UART_Transmit(&huart1, buffer.data(), static_cast<uint16_t>(view.size()), 10);
+
+    // The command parser handler will redirect the message to
+    // its rightful owner.
     // auto val = cmd_parser(hdr.cmd, view);
     return view;
 };
@@ -86,6 +111,8 @@ auto uart_irq_fn = [](uint16_t sz) {
 
 auto check_address = [](uint16_t address) -> bool {
     static_cast<void>(address);
+    // Here we need to know if its a broadcast , then its always good
+    // Or if we have a id and if the id match.
     return true;
 };
 

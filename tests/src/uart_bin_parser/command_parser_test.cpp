@@ -35,14 +35,14 @@ auto callback_copy = [](msg::OptArgs args, auto start_iter, auto end_iter) {
 
 TEST(Cmd_parser, GuppiCmdProtocol_create)
 {
-    // constexpr GuppiCmdProtocol<CmdNr::CMD_ENABLE_ADDRESS_SETUP, decltype(enable_address)>
+    // constexpr GuppiCmdProtocol<GuppiCmd::CMD_ENABLE_ADDRESS_SETUP, decltype(enable_address)>
     //     address_enable_item{enable_address};
 
     // clang-format off
     constexpr  auto  cmds = make_Guppi_protocol(
-        make_cmd_item<CmdNr::CMD_ENABLE_ADDRESS_SETUP>(callback),
-        make_cmd_item<CmdNr::CMD_DISABLE_ADDRESS_SETUP>(callback),
-        make_cmd_item<CmdNr::CMD_SET_PRINTHEAD_ADDRESS>(callback)
+        make_cmd_item<GuppiCmd::CMD_ENABLE_ADDRESS_SETUP>(callback),
+        make_cmd_item<GuppiCmd::CMD_DISABLE_ADDRESS_SETUP>(callback),
+        make_cmd_item<GuppiCmd::CMD_SET_PRINTHEAD_ADDRESS>(callback)
                          );
     // clang-format on
 
@@ -52,13 +52,13 @@ TEST(Cmd_parser, GuppiCmdProtocol_create)
 TEST(Cmd_parser, GuppiProtocol_find)
 {
     constexpr auto cmds =
-        make_Guppi_protocol(make_cmd_item<CmdNr::CMD_ENABLE_ADDRESS_SETUP>(callback),
-                            make_cmd_item<CmdNr::CMD_DISABLE_ADDRESS_SETUP>(callback),
-                            make_cmd_item<CmdNr::CMD_SET_PRINTHEAD_ADDRESS>(callback_copy));
+        make_Guppi_protocol(make_cmd_item<GuppiCmd::CMD_ENABLE_ADDRESS_SETUP>(callback),
+                            make_cmd_item<GuppiCmd::CMD_DISABLE_ADDRESS_SETUP>(callback),
+                            make_cmd_item<GuppiCmd::CMD_SET_PRINTHEAD_ADDRESS>(callback_copy));
 
     {
         msg::RetType ret_buff{};
-        exec_cmd(cmds, CmdNr::CMD_DISABLE_ADDRESS_SETUP, {}, ret_buff.begin(), ret_buff.end());
+        exec_cmd(cmds, GuppiCmd::CMD_DISABLE_ADDRESS_SETUP, {}, ret_buff.begin(), ret_buff.end());
 
         uint8_t last{};
         for (const auto& item : ret_buff)
@@ -72,7 +72,7 @@ TEST(Cmd_parser, GuppiProtocol_find)
                                     0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
     {
         msg::RetType ret_buff{};
-        exec_cmd(cmds, CmdNr::CMD_SET_PRINTHEAD_ADDRESS, args, ret_buff.begin(),
+        exec_cmd(cmds, GuppiCmd::CMD_SET_PRINTHEAD_ADDRESS, args, ret_buff.begin(),
                  ret_buff.begin() + args.size());
 
         for (size_t i = 0; i < args.size(); ++i)

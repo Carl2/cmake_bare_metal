@@ -8,12 +8,13 @@
 namespace msg
 {
 
-enum class CmdNr
+enum class GuppiCmd
 {
     CMD_ENABLE_ADDRESS_SETUP  = 12,
     CMD_DISABLE_ADDRESS_SETUP = 13,
     CMD_SET_PRINTHEAD_ADDRESS = 14
 };
+
 using OptArgs          = std::optional<std::span<const uint8_t>>;
 using RetType          = std::array<uint8_t, 50>;
 using RetType_Iterator = RetType::iterator;
@@ -38,12 +39,12 @@ constexpr decltype(auto) tuple_for_each(Tuple tpl, MatchFN_t match_fn, OptArgs&&
 
 }  // namespace impl
 
-template <CmdNr Nr, std::output_iterator<uint8_t> Iter, std::invocable<OptArgs, Iter, Iter> Fn>
+template <GuppiCmd Nr, std::output_iterator<uint8_t> Iter, std::invocable<OptArgs, Iter, Iter> Fn>
 struct GuppiCmdProtocol
 {
 
-    using callback_type           = Fn;
-    constexpr static CmdNr CmdNum = Nr;
+    using callback_type              = Fn;
+    constexpr static GuppiCmd CmdNum = Nr;
 
     constexpr GuppiCmdProtocol(Fn fn) : callbackFn_{fn} {}
 
@@ -56,17 +57,17 @@ constexpr auto make_Guppi_protocol(Args... item)
     return std::make_tuple(item...);
 }
 
-template <CmdNr cmdId, typename Fn>
+template <GuppiCmd cmdId, typename Fn>
 constexpr auto make_cmd_item(Fn callback)
 {
     return GuppiCmdProtocol<cmdId, RetType_Iterator, Fn>{callback};
 }
 
 template <std::output_iterator<uint8_t> Iter, typename... Tpls>
-constexpr decltype(auto) exec_cmd(std::tuple<Tpls...> cmds, CmdNr cmdId, OptArgs&& args,
+constexpr decltype(auto) exec_cmd(std::tuple<Tpls...> cmds, GuppiCmd cmdId, OptArgs&& args,
                                   Iter start_iter, Iter end_iter)
 {
-    auto match_fn = [cmdId](CmdNr current) { return cmdId == current ? true : false; };
+    auto match_fn = [cmdId](GuppiCmd current) { return cmdId == current ? true : false; };
 
     return impl::tuple_for_each(cmds, match_fn, std::move(args), start_iter, end_iter,
                                 std::index_sequence_for<Tpls...>{});
