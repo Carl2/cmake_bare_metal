@@ -90,11 +90,11 @@ auto cmds = msg::make_Guppi_protocol(
                                      );
 // clang-format on
 
+// When a recieve message data is called, the message has this as destination.
 auto receive_message_data = [](const msg::Header& hdr, std::span<const uint8_t> view) {
-    static_cast<void>(hdr);
     msg::Uart_buffer_t buffer;
     msg::RetType ret_buff{};
-    exec_cmd(cmds, msg::GuppiCmd::CMD_ENABLE_ADDRESS_SETUP, {}, ret_buff.begin(), ret_buff.end());
+    exec_cmd(cmds, msg::command_transform(hdr.cmd), {}, ret_buff.begin(), ret_buff.end());
     memcpy(buffer.data(), view.data(), view.size());
     HAL_UART_Transmit(&huart1, buffer.data(), static_cast<uint16_t>(view.size()), 10);
 
@@ -107,13 +107,6 @@ auto receive_message_data = [](const msg::Header& hdr, std::span<const uint8_t> 
 auto uart_irq_fn = [](uint16_t sz) {
     // TODO: Need to check that size is reasonable.
     HAL_UART_Receive_IT(&huart1, uart_data.data(), sz);
-};
-
-auto check_address = [](uint16_t address) -> bool {
-    static_cast<void>(address);
-    // Here we need to know if its a broadcast , then its always good
-    // Or if we have a id and if the id match.
-    return true;
 };
 
 }  // namespace
@@ -140,16 +133,11 @@ static void MX_USART1_UART_Init(void);
  */
 int main(void)
 {
-
+    // clang-format off
     msg::MainMachine m_sm{
-        msg::SystemContext{uart_irq_fn, uart_sync_send, receive_message_data, check_address}};
-    // v.at(5);
-    /* USER CODE BEGIN 1 */
-
-    /* USER CODE END 1 */
-
-    /* MCU Configuration--------------------------------------------------------*/
-
+        msg::SystemContext{uart_irq_fn, uart_sync_send, receive_message_data, get_check_address_fn(address_sm)}
+    };
+    // clang-format on
     /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
     HAL_Init();
 

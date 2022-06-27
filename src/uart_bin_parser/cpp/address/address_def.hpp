@@ -6,12 +6,17 @@
 
 namespace uart
 {
+using OptPHId_t = std::optional<uint16_t>;
+
+constexpr static uint16_t BROAD_CAST_ADDRESS = 0xaa'aa;
 
 struct EvEnableAddressSetup
 {};
 
 struct EvSetAddress
-{};
+{
+    uint16_t address{};
+};
 
 struct EvDisableAddrSetup
 {};
@@ -23,7 +28,6 @@ struct EvDisableAddrSetup
 template <std::invocable<std::string_view> uart_out_t>
 struct AddressContext
 {
-    using OptPHId_t = std::optional<uint16_t>;
 
     uart_out_t out_fn_;
 

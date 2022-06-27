@@ -8,12 +8,28 @@
 namespace msg
 {
 
-enum class GuppiCmd
+enum class GuppiCmd : uint16_t
 {
     CMD_ENABLE_ADDRESS_SETUP  = 12,
     CMD_DISABLE_ADDRESS_SETUP = 13,
     CMD_SET_PRINTHEAD_ADDRESS = 14
 };
+
+/**
+ *  \brief Transform a number to a enum.
+ *
+ *  The value is transformed from an uint16_t to
+ *  \note at this point there is not testing if the command
+ *        is not part of the GuppiCmd Enum..
+ *  \todo Do some sanity checking.
+ *
+ *  \param uint16_t
+ *  \return GuppiCmd
+ */
+inline GuppiCmd command_transform(uint16_t bin_cmd_repr)
+{
+    return GuppiCmd{bin_cmd_repr};
+}
 
 using OptArgs          = std::optional<std::span<const uint8_t>>;
 using RetType          = std::array<uint8_t, 50>;
