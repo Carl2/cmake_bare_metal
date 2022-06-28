@@ -15,38 +15,10 @@ struct AddressSetup
 
     constexpr static auto WaitForSetCmd  = sml::state<class WaitForSetCmd>;
     constexpr static auto WaitForDisable = sml::state<class WaitForDisable>;
+    constexpr static auto NoAddress      = sml::state<class NoAddress>;
+    constexpr static auto WithAddress    = sml::state<class WithAddress>;
 
-    struct EnumerationMode
-    {
-        auto operator()() const
-        {
-            using namespace sml;
-            auto fn = [](std::string_view str) {
-                return [str](const auto& ev, Context_t& ctx) {
-                    static_cast<void>(ev);
-                    static_cast<void>(ctx);
-                    // ctx.out_fn_(str);
-                };
-            };
-            auto set_address = [](Context_t& ctx, const auto& ev) {
-                ctx.phId_ = ev.address;
-                ctx.out_fn_("Address is set");
-            };
-
-            // clang-format off
-            return make_transition_table(
-                //-[CurrentState]---|------[Event]-----|---[Guard]----|--[Action]---|--Next State-----
-                //*"init"_s                                       /fn("Wait for SetCmd") = WaitForSetCmd
-                *WaitForSetCmd          + event<EvSetAddress>   /set_address          = WaitForDisable
-                ,WaitForSetCmd          + sml::on_entry<_>      /fn("ON Entry")
-                                         );
-            // clang-format on
-        }
-    };
-
-    constexpr static auto NoAddress          = sml::state<class NoAddress>;
-    constexpr static auto WithAddress        = sml::state<class WithAddress>;
-    constexpr static auto EnumerationModeSub = sml::state<EnumerationMode>;
+    constexpr static auto EnablePinState = sml::state<class EnablePinState>;
 
     struct AddressSetupSM
     {
@@ -62,14 +34,26 @@ struct AddressSetup
                 };
             };
 
+            auto set_enable_pin = [](const auto& ev, Context_t& ctx) {
+                ctx.out_fn_("Enable pin triggered");
+                ctx.set_pin(ev.state);
+            };
+            auto is_pin_enable = [](Context_t& ctx) -> bool { return ctx.get_pin_state(); };
+
             auto has_uuid = [](Context_t& ctx) -> bool { return ctx.has_id(); };
+
+            auto set_address = [](const auto& ev, Context_t& ctx) { ctx.set_id(ev.address); };
             // clang-format off
             return make_transition_table(
                 //-[CurrentState]---|------[Event]-----|---[Guard]----|--[Action]---|--Next State-----
-                *NoAddress         + event<EvEnableAddressSetup> /fn("Entering Enum mode")  = EnumerationModeSub
-                ,EnumerationModeSub   + event<EvDisableAddrSetup>  [not has_uuid] /fn("No Address") = NoAddress
-                ,EnumerationModeSub   + event<EvDisableAddrSetup>  [has_uuid]   /fn("With Address") = WithAddress
-
+                *NoAddress       + event<EvEnableAddressSetup>               /fn("Entering Enum mode")  = WaitForSetCmd
+                ,WaitForSetCmd   + event<EvDisableAddrSetup>  [not has_uuid] /fn("Disable <WaitForSetCmd> -> Noaddress") = NoAddress
+                ,WaitForSetCmd   + event<EvDisableAddrSetup>  [has_uuid]     /fn("Disable <WaitForSetCmd> -> WithAddress") = WithAddress
+                ,WaitForSetCmd   + event<EvSetAddress>     [is_pin_enable]   /(fn("SetAddress <WaitForSetCmd> -> WaitForDisable"), set_address)  = WaitForDisable
+                ,WaitForDisable  + event<EvDisableAddrSetup>                 /fn("Disable <WaitForDisable> -> WithAddress")       = WithAddress
+                ,WithAddress     + event<EvEnableAddressSetup>               /fn("EnableAddress <WithAddress> -> WaitForSetCmd")  = WaitForSetCmd
+                //----------------------------------------
+                ,*EnablePinState         + event<EvEnablePinTriggered>             /set_enable_pin
                                          );
             // clang-format on
         }
@@ -93,6 +77,8 @@ struct AddressSetup
                 *(ctx_.phId_) == rhs ? true : false);
         // clang-format on
     };
+
+    void enable_pin_state(bool state) { address_sm_.process_event(EvEnablePinTriggered{state}); }
 };
 
 template <typename F>

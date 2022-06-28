@@ -63,15 +63,17 @@ TEST(address_setup_test, statemachine_check)
     using MAIN_T = AddressSetup<decltype(ctx)>;
     using SM_T   = MAIN_T::AddressSetupSM;
 
-    {
+    {  // DISABLE:  No address, and trasition back to NoAddress (no setaddress event)
         sml::sm<SM_T> address_sm_{ctx};
         ASSERT_TRUE(address_sm_.is(MAIN_T::NoAddress));
         address_sm_.process_event(EvEnableAddressSetup{});
-        // ASSERT_TRUE(address_sm_.is(MAIN_T::EnumerationMode));
+        ASSERT_TRUE(address_sm_.is(MAIN_T::WaitForSetCmd));
         address_sm_.process_event(EvDisableAddrSetup{});
         ASSERT_TRUE(address_sm_.is(MAIN_T::NoAddress));
-
-        fmt::print("----------\n");
+    }
+    fmt::print("----------\n");
+    {
+        sml::sm<SM_T> address_sm_{ctx};
         ctx.phId_ = 1;
         ASSERT_TRUE(address_sm_.is(MAIN_T::NoAddress));
         address_sm_.process_event(EvEnableAddressSetup{});
@@ -81,6 +83,7 @@ TEST(address_setup_test, statemachine_check)
     }
 
     fmt::print("----------\n");
+
     {
         ctx.phId_ = std::nullopt;
         sml::sm<SM_T> address_sm_{ctx};
@@ -100,4 +103,126 @@ TEST(address_setup_test, command_transform_test)
     ASSERT_EQ(msg::command_transform(14), msg::GuppiCmd::CMD_SET_PRINTHEAD_ADDRESS);
     auto apa = msg::command_transform(15);
     fmt::print("{}\n", apa);
+}
+
+TEST(address_setup_test, statemachine_check_disable)
+{
+    using namespace uart;
+    auto ctx     = uart::AddressContext{debug_msg};
+    using MAIN_T = AddressSetup<decltype(ctx)>;
+    using SM_T   = MAIN_T::AddressSetupSM;
+
+    {  // DISABLE:  No address, and trasition back to NoAddress (no setaddress event)
+        sml::sm<SM_T> address_sm_{ctx};
+        ASSERT_TRUE(address_sm_.is(MAIN_T::NoAddress));
+        address_sm_.process_event(EvEnableAddressSetup{});
+        ASSERT_TRUE(address_sm_.is(MAIN_T::WaitForSetCmd));
+        address_sm_.process_event(EvDisableAddrSetup{});
+        ASSERT_TRUE(address_sm_.is(MAIN_T::NoAddress));
+    }
+    fmt::print("----------\n");
+    {  // DISABLE While having, have a ID
+        sml::sm<SM_T> address_sm_{ctx};
+        ctx.phId_ = 1;
+        ASSERT_TRUE(address_sm_.is(MAIN_T::NoAddress));
+        address_sm_.process_event(EvEnableAddressSetup{});
+        ASSERT_TRUE(address_sm_.is(MAIN_T::WaitForSetCmd));
+        address_sm_.process_event(EvDisableAddrSetup{});
+        ASSERT_TRUE(address_sm_.is(MAIN_T::WithAddress));
+    }
+}
+
+TEST(address_setup_test, enable_pin)
+{
+    using namespace uart;
+    auto ctx     = uart::AddressContext{debug_msg};
+    using MAIN_T = AddressSetup<decltype(ctx)>;
+    using SM_T   = MAIN_T::AddressSetupSM;
+
+    {  // Pin triggered
+        sml::sm<SM_T> address_sm_{ctx};
+        ASSERT_TRUE(address_sm_.is(MAIN_T::NoAddress, MAIN_T::EnablePinState));
+        ASSERT_FALSE(ctx.get_pin_state());
+        address_sm_.process_event(EvEnablePinTriggered{true});
+        ASSERT_TRUE(ctx.get_pin_state());
+        address_sm_.process_event(EvEnablePinTriggered{false});
+        ASSERT_FALSE(ctx.get_pin_state());
+    }
+}
+
+TEST(address_setup_test, statemachine_check_set_address)
+{
+    using namespace uart;
+    auto ctx     = uart::AddressContext{debug_msg};
+    using MAIN_T = AddressSetup<decltype(ctx)>;
+    using SM_T   = MAIN_T::AddressSetupSM;
+
+    {  // Enable a set address sequenece with trigger pin set.
+        sml::sm<SM_T> address_sm_{ctx};
+        ASSERT_FALSE(ctx.get_pin_state());
+        ASSERT_TRUE(address_sm_.is(MAIN_T::NoAddress));
+        // Enable the address setup state
+        address_sm_.process_event(EvEnableAddressSetup{});
+        ASSERT_TRUE(address_sm_.is(MAIN_T::WaitForSetCmd));
+        // Set the trigpin.
+        address_sm_.process_event(EvEnablePinTriggered{true});
+        ASSERT_TRUE(ctx.get_pin_state());
+        // Send new address
+        address_sm_.process_event(EvSetAddress{0xfeed});
+        ASSERT_TRUE(address_sm_.is(MAIN_T::WaitForDisable));
+        ASSERT_TRUE(ctx.has_id());
+        ASSERT_EQ((*ctx.get_opt_id()), 0xfeed);
+        // Send disable
+        address_sm_.process_event(EvDisableAddrSetup{});
+        ASSERT_TRUE(address_sm_.is(MAIN_T::WithAddress));
+    }
+
+    {  // Enable set address without the trigger pin set.
+        // New fresh context
+        ctx = uart::AddressContext{debug_msg};
+        sml::sm<SM_T> address_sm_{ctx};
+        //  trigger pin should not be set.
+        ASSERT_FALSE(ctx.get_pin_state());
+        ASSERT_TRUE(address_sm_.is(MAIN_T::NoAddress));
+        // Enable the address setup state
+        address_sm_.process_event(EvEnableAddressSetup{});
+        ASSERT_TRUE(address_sm_.is(MAIN_T::WaitForSetCmd));
+        // Send EvSetAddress (No trigg pin), no transitions should be present
+        address_sm_.process_event(EvSetAddress{0xfeed});
+        ASSERT_TRUE(address_sm_.is(MAIN_T::WaitForSetCmd));
+        // EvDisableaddrsetup - transition to NoAddress
+        address_sm_.process_event(EvDisableAddrSetup{});
+        ASSERT_TRUE(address_sm_.is(MAIN_T::NoAddress));
+    }
+
+    {  // Set new address (already existing)
+        ctx       = uart::AddressContext{debug_msg};
+        ctx.phId_ = 0xfeed;
+        sml::sm<SM_T> address_sm_{ctx};
+        // Lets transition to WithAddress
+        ASSERT_FALSE(ctx.get_pin_state());
+        ASSERT_TRUE(address_sm_.is(MAIN_T::NoAddress));
+
+        address_sm_.process_event(EvEnableAddressSetup{});
+        ASSERT_TRUE(address_sm_.is(MAIN_T::WaitForSetCmd));
+
+        address_sm_.process_event(EvDisableAddrSetup{});
+        ASSERT_TRUE(address_sm_.is(MAIN_T::WithAddress));
+
+        // Lets first trigger the enable pin
+        address_sm_.process_event(EvEnablePinTriggered{true});
+        ASSERT_TRUE(ctx.get_pin_state());
+        address_sm_.process_event(EvEnableAddressSetup{});
+        ASSERT_TRUE(address_sm_.is(MAIN_T::WaitForSetCmd));
+        // Send EvSetaddress event
+        address_sm_.process_event(EvSetAddress{0x0bad});
+        ASSERT_TRUE(address_sm_.is(MAIN_T::WaitForDisable));
+
+        // Disable the trigg pin
+        address_sm_.process_event(EvEnablePinTriggered{false});
+        ASSERT_FALSE(ctx.get_pin_state());
+        // Send Disable Address setup
+        address_sm_.process_event(EvDisableAddrSetup{});
+        ASSERT_TRUE(address_sm_.is(MAIN_T::WithAddress));
+    }
 }

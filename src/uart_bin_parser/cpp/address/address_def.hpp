@@ -21,6 +21,11 @@ struct EvSetAddress
 struct EvDisableAddrSetup
 {};
 
+struct EvEnablePinTriggered
+{
+    bool state{};
+};
+
 ///////////////////////////////////////////////////////////////////////////////
 //                                  Context                                  //
 ///////////////////////////////////////////////////////////////////////////////
@@ -32,9 +37,13 @@ struct AddressContext
     uart_out_t out_fn_;
 
     OptPHId_t phId_{std::nullopt};
+    bool pin_triggered_{};
 
     bool has_id() const { return phId_.has_value(); }
+    OptPHId_t get_opt_id() const { return phId_; }
     void set_id(uint16_t val) { phId_ = val; }
+    void set_pin(bool state) { pin_triggered_ = state; }
+    bool get_pin_state() const { return pin_triggered_; }
 };
 
 }  // namespace uart
