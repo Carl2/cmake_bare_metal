@@ -12,7 +12,8 @@ enum class GuppiCmd : uint16_t
 {
     CMD_ENABLE_ADDRESS_SETUP  = 12,
     CMD_DISABLE_ADDRESS_SETUP = 13,
-    CMD_SET_PRINTHEAD_ADDRESS = 14
+    CMD_SET_PRINTHEAD_ADDRESS = 14,
+    DEBUG_ENABLE_PIN          = 999
 };
 
 /**

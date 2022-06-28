@@ -82,10 +82,16 @@ auto address_sm = uart::AddressSetup{uart::AddressContext{uart_sync_send}};
 //     uart::get_address_setup_callback(address_sm));
 // clang-format off
 auto cmds = msg::make_Guppi_protocol(
+    // Used for Set address
     msg::make_cmd_item<msg::GuppiCmd::CMD_ENABLE_ADDRESS_SETUP>(
-        uart::get_address_setup_callback(address_sm)),
+        uart::get_enable_address_setup_callback(address_sm)),
     msg::make_cmd_item<msg::GuppiCmd::CMD_DISABLE_ADDRESS_SETUP>(
-        uart::get_disable_address_setup_callback(address_sm))
+        uart::get_disable_address_setup_callback(address_sm)),
+    msg::make_cmd_item<msg::GuppiCmd::CMD_SET_PRINTHEAD_ADDRESS>(
+        uart::get_address_setup_callback(address_sm)),
+    // Fake Enable pin
+    msg::make_cmd_item<msg::GuppiCmd::DEBUG_ENABLE_PIN >(
+        uart::get_debug_pin_toggle(address_sm))
 
                                      );
 // clang-format on
@@ -103,7 +109,6 @@ auto receive_message_data = [](const msg::Header& hdr, std::span<const uint8_t> 
     // auto val = cmd_parser(hdr.cmd, view);
     return view;
 };
-
 auto uart_irq_fn = [](uint16_t sz) {
     // TODO: Need to check that size is reasonable.
     HAL_UART_Receive_IT(&huart1, uart_data.data(), sz);

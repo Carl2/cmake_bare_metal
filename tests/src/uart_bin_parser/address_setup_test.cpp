@@ -226,3 +226,51 @@ TEST(address_setup_test, statemachine_check_set_address)
         ASSERT_TRUE(address_sm_.is(MAIN_T::WithAddress));
     }
 }
+
+TEST(address_setup_test, fake_msg_recv_event_test)
+{
+    uart::AddressSetup address_sm{uart::AddressContext{debug_msg}};
+    ASSERT_FALSE(address_sm.has_address());
+    auto cmds = msg::make_Guppi_protocol(
+        // Used for Set address
+        msg::make_cmd_item<msg::GuppiCmd::CMD_ENABLE_ADDRESS_SETUP>(
+            uart::get_enable_address_setup_callback(address_sm)),
+        msg::make_cmd_item<msg::GuppiCmd::CMD_DISABLE_ADDRESS_SETUP>(
+            uart::get_disable_address_setup_callback(address_sm)),
+        msg::make_cmd_item<msg::GuppiCmd::CMD_SET_PRINTHEAD_ADDRESS>(
+            uart::get_address_setup_callback(address_sm)),
+        // Fake Enable pin
+        msg::make_cmd_item<msg::GuppiCmd::DEBUG_ENABLE_PIN>(
+            uart::get_debug_pin_toggle(address_sm)));
+
+    ASSERT_EQ(std::tuple_size<decltype(cmds)>(), 4);
+    msg::RetType ret_buff{};
+
+    {  // Make a fake Pin Enable
+        std::array<uint8_t, 1> arg = {0x01};
+        exec_cmd(cmds, msg::GuppiCmd::DEBUG_ENABLE_PIN, arg, ret_buff.begin(), ret_buff.end());
+        ASSERT_TRUE(address_sm.is_enable_pin());
+    }
+
+    exec_cmd(cmds, msg::GuppiCmd::CMD_ENABLE_ADDRESS_SETUP, {}, ret_buff.begin(), ret_buff.end());
+    ASSERT_TRUE(address_sm.is_enable_pin());
+    {
+        std::array<uint8_t, 2> arg = {0xca, 0xfe};
+        exec_cmd(cmds, msg::GuppiCmd::CMD_SET_PRINTHEAD_ADDRESS, arg, ret_buff.begin(),
+                 ret_buff.end());
+        ASSERT_TRUE(address_sm.has_address());
+        auto addr = address_sm.get_address();
+        ASSERT_EQ(*addr, 0xcafe);
+    }
+
+    {
+        exec_cmd(cmds, msg::GuppiCmd::CMD_DISABLE_ADDRESS_SETUP, {}, ret_buff.begin(),
+                 ret_buff.end());
+        ASSERT_TRUE(address_sm.is_enable_pin());
+    }
+    {
+        std::array<uint8_t, 1> arg = {0x00};
+        exec_cmd(cmds, msg::GuppiCmd::DEBUG_ENABLE_PIN, arg, ret_buff.begin(), ret_buff.end());
+        ASSERT_FALSE(address_sm.is_enable_pin());
+    }
+}
