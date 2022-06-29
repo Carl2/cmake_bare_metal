@@ -26,8 +26,8 @@ TEST(address_setup_test, init)
 
     {
         msg::RetType ret_buff{};
-        exec_cmd(cmds, msg::GuppiCmd::CMD_ENABLE_ADDRESS_SETUP, {}, ret_buff.begin(),
-                 ret_buff.end());
+        (void)exec_cmd(cmds, msg::GuppiCmd::CMD_ENABLE_ADDRESS_SETUP, {}, ret_buff.begin(),
+                       ret_buff.end());
         // TODO: Check output, input
     }
 

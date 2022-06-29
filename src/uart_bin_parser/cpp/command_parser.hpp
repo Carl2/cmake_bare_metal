@@ -13,6 +13,7 @@ enum class GuppiCmd : uint16_t
     CMD_ENABLE_ADDRESS_SETUP  = 12,
     CMD_DISABLE_ADDRESS_SETUP = 13,
     CMD_SET_PRINTHEAD_ADDRESS = 14,
+    CMD_GET_UUID              = 19,
     DEBUG_ENABLE_PIN          = 999
 };
 
@@ -44,14 +45,16 @@ constexpr decltype(auto) tuple_for_each(Tuple tpl, MatchFN_t match_fn, OptArgs&&
                                         Iter start_in, Iter end_in, std::index_sequence<Is...>)
 {
 
-    auto f_single = [match_fn, args, start_in, end_in](auto single) {
+    size_t ret_sz{};
+    auto f_single = [match_fn, args, start_in, end_in, &ret_sz](auto single) {
         if (match_fn(single.CmdNum))
         {
-            single.callbackFn_(args, start_in, end_in);
+            ret_sz = single.callbackFn_(args, start_in, end_in);
         }
     };
 
     (f_single(std::get<Is>(tpl)), ...);
+    return ret_sz;
 }
 
 }  // namespace impl
@@ -59,7 +62,6 @@ constexpr decltype(auto) tuple_for_each(Tuple tpl, MatchFN_t match_fn, OptArgs&&
 template <GuppiCmd Nr, std::output_iterator<uint8_t> Iter, std::invocable<OptArgs, Iter, Iter> Fn>
 struct GuppiCmdProtocol
 {
-
     using callback_type              = Fn;
     constexpr static GuppiCmd CmdNum = Nr;
 

@@ -22,7 +22,6 @@
 #include <array>
 #include <string_view>
 #include "address/address_setup_com.hpp"
-#include "command_handler.hpp"
 #include "msg_def.hpp"
 #include "msg_sml.hpp"
 /* Private includes ----------------------------------------------------------*/
@@ -89,6 +88,9 @@ auto cmds = msg::make_Guppi_protocol(
         uart::get_disable_address_setup_callback(address_sm)),
     msg::make_cmd_item<msg::GuppiCmd::CMD_SET_PRINTHEAD_ADDRESS>(
         uart::get_address_setup_callback(address_sm)),
+    // Get uuid
+    msg::make_cmd_item<msg::GuppiCmd::CMD_GET_UUID>(
+        uart::get_UUID_callback(address_sm)),
     // Fake Enable pin
     msg::make_cmd_item<msg::GuppiCmd::DEBUG_ENABLE_PIN >(
         uart::get_debug_pin_toggle(address_sm))
@@ -97,12 +99,15 @@ auto cmds = msg::make_Guppi_protocol(
 // clang-format on
 
 // When a recieve message data is called, the message has this as destination.
+// TODO: see if matching hdr.len == view.size()...
 auto receive_message_data = [](const msg::Header& hdr, std::span<const uint8_t> view) {
-    msg::Uart_buffer_t buffer;
+    // msg::Uart_buffer_t buffer;
     msg::RetType ret_buff{};
-    exec_cmd(cmds, msg::command_transform(hdr.cmd), {}, ret_buff.begin(), ret_buff.end());
-    memcpy(buffer.data(), view.data(), view.size());
-    HAL_UART_Transmit(&huart1, buffer.data(), static_cast<uint16_t>(view.size()), 10);
+    msg::OptArgs optArg((hdr.len > 0 ? std::optional(view) : std::nullopt));
+    auto sz = exec_cmd(cmds, msg::command_transform(hdr.cmd), std::move(optArg), ret_buff.begin(),
+                       ret_buff.end());
+
+    HAL_UART_Transmit(&huart1, ret_buff.data(), static_cast<uint16_t>(sz), 10);
 
     // The command parser handler will redirect the message to
     // its rightful owner.

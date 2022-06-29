@@ -117,9 +117,12 @@ constexpr decltype(auto) get_enable_address_setup_callback(AddressSetup<Context_
 {
     return [&address_sm](msg::OptArgs args, auto start_iter, auto end_iter) {
         static_cast<void>(args);
-        static_cast<void>(start_iter);
+        // static_cast<void>(start_iter);
         static_cast<void>(end_iter);
+        constexpr static std::string_view out = "<Enable address>\n\r";
+        std::copy(out.begin(), out.end(), start_iter);
         address_sm.enable_address_setup();
+        return out.size();
     };
 }
 
@@ -128,9 +131,11 @@ constexpr decltype(auto) get_disable_address_setup_callback(AddressSetup<Context
 {
     return [&address_sm](msg::OptArgs args, auto start_iter, auto end_iter) {
         static_cast<void>(args);
-        static_cast<void>(start_iter);
         static_cast<void>(end_iter);
+        constexpr static std::string_view out = "<Disable address>\n\r";
+        std::copy(out.begin(), out.end(), start_iter);
         address_sm.disable_address_setup();
+        return out.size();
     };
 }
 
@@ -141,12 +146,35 @@ constexpr decltype(auto) get_address_setup_callback(AddressSetup<Context_t>& add
     return [&address_sm](msg::OptArgs args, auto start_iter, auto end_iter) {
         static_cast<void>(start_iter);
         static_cast<void>(end_iter);
+        constexpr static std::string_view out = "<address setup>\n\r";
+        std::copy(out.begin(), out.end(), start_iter);
         if (args)
         {
             auto data_span   = *args;
             uint16_t address = bin::convert_nbo<uint16_t>(data_span.begin());
             address_sm.set_address(address);
         }
+        return out.size();
+    };
+}
+
+template <typename Context_t>
+constexpr decltype(auto) get_UUID_callback(AddressSetup<Context_t>& address_sm)
+{
+
+    return [&address_sm](msg::OptArgs args, auto start_iter, auto end_iter) {
+        static_cast<void>(args);
+        static_cast<void>(start_iter);
+        static_cast<void>(end_iter);
+        auto opt_uuid = address_sm.get_address();
+        if (opt_uuid)
+        {
+            *start_iter = static_cast<uint8_t>(((*opt_uuid) & 0xff00) >> 8);
+            start_iter++;
+            *start_iter = static_cast<uint8_t>((*opt_uuid) & 0x00ff);
+        }
+
+        return 2;
     };
 }
 
@@ -154,13 +182,16 @@ template <typename Context_t>
 auto get_debug_pin_toggle(AddressSetup<Context_t>& address_sm)
 {
 
-    return [&address_sm](msg::OptArgs args, [[maybe_unused]] auto start_iter,
-                         [[maybe_unused]] auto end_iter) {
+    return [&address_sm](msg::OptArgs args, auto start_iter, [[maybe_unused]] auto end_iter) {
+        constexpr static std::string_view out = "<Toggle PIN>";
         if (args)
         {
             auto pin_state = bin::convert_nbo<uint8_t>((*args).begin());
             address_sm.enable_pin_state(pin_state > 0 ? true : false);
+
+            std::copy(out.begin(), out.end(), start_iter);
         }
+        return out.size();
     };
 }
 
