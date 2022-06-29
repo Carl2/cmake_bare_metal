@@ -66,7 +66,7 @@ Receive_data recv_data;
 
 volatile bool msg_recv_flag{};
 
-auto uart_sync_send = [](std::string_view view) {
+auto uart_sync_send = [](msg::Uart_buffer_view view) {
     msg::Uart_buffer_t buffer;
     memcpy(buffer.data(), view.data(), view.size());
     HAL_UART_Transmit(&huart1, buffer.data(), static_cast<uint16_t>(view.size()), 10);
@@ -102,17 +102,15 @@ auto cmds = msg::make_Guppi_protocol(
 // TODO: see if matching hdr.len == view.size()...
 auto receive_message_data = [](const msg::Header& hdr, std::span<const uint8_t> view) {
     // msg::Uart_buffer_t buffer;
-    msg::RetType ret_buff{};
+    msg::Uart_buffer_t ret_buff{};
     msg::OptArgs optArg((hdr.len > 0 ? std::optional(view) : std::nullopt));
     auto sz = exec_cmd(cmds, msg::command_transform(hdr.cmd), std::move(optArg), ret_buff.begin(),
                        ret_buff.end());
 
-    HAL_UART_Transmit(&huart1, ret_buff.data(), static_cast<uint16_t>(sz), 10);
-
     // The command parser handler will redirect the message to
     // its rightful owner.
     // auto val = cmd_parser(hdr.cmd, view);
-    return view;
+    return std::make_pair(sz, ret_buff);
 };
 auto uart_irq_fn = [](uint16_t sz) {
     // TODO: Need to check that size is reasonable.

@@ -117,12 +117,14 @@ constexpr decltype(auto) get_enable_address_setup_callback(AddressSetup<Context_
 {
     return [&address_sm](msg::OptArgs args, auto start_iter, auto end_iter) {
         static_cast<void>(args);
-        // static_cast<void>(start_iter);
+        static_cast<void>(start_iter);
         static_cast<void>(end_iter);
-        constexpr static std::string_view out = "<Enable address>\n\r";
-        std::copy(out.begin(), out.end(), start_iter);
+        //
+        // generate_msg(start_iter, msg::GuppiCmd::ACK, {});
+        // constexpr static std::string_view out = "<Enable address>\n\r";
+        // std::copy(out.begin(), out.end(), start_iter);
         address_sm.enable_address_setup();
-        return out.size();
+        return 0;
     };
 }
 
@@ -131,11 +133,13 @@ constexpr decltype(auto) get_disable_address_setup_callback(AddressSetup<Context
 {
     return [&address_sm](msg::OptArgs args, auto start_iter, auto end_iter) {
         static_cast<void>(args);
+        static_cast<void>(start_iter);
         static_cast<void>(end_iter);
-        constexpr static std::string_view out = "<Disable address>\n\r";
-        std::copy(out.begin(), out.end(), start_iter);
+
+        // constexpr static std::string_view out = "<Disable address>\n\r";
+        // std::copy(out.begin(), out.end(), start_iter);
         address_sm.disable_address_setup();
-        return out.size();
+        return 0;
     };
 }
 
@@ -146,15 +150,15 @@ constexpr decltype(auto) get_address_setup_callback(AddressSetup<Context_t>& add
     return [&address_sm](msg::OptArgs args, auto start_iter, auto end_iter) {
         static_cast<void>(start_iter);
         static_cast<void>(end_iter);
-        constexpr static std::string_view out = "<address setup>\n\r";
-        std::copy(out.begin(), out.end(), start_iter);
+        // constexpr static std::string_view out = "<address setup>\n\r";
+        // std::copy(out.begin(), out.end(), start_iter);
         if (args)
         {
             auto data_span   = *args;
             uint16_t address = bin::convert_nbo<uint16_t>(data_span.begin());
             address_sm.set_address(address);
         }
-        return out.size();
+        return 0;
     };
 }
 

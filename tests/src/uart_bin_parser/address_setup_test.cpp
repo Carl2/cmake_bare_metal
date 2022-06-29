@@ -10,7 +10,10 @@
 namespace
 {
 
-auto debug_msg = [](std::string_view str) { fmt::print("<debug>: {}\n", str); };
+auto debug_msg = [](msg::Uart_buffer_view data) {
+    std::string_view str(reinterpret_cast<char*>(data.data()), data.size());
+    fmt::print("<debug>: {}\n", str);
+};
 
 }  // namespace
 

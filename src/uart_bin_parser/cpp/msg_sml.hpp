@@ -34,8 +34,13 @@ struct MainMachine
             };
 
             auto receive_message = [](auto ev, SysCtx& ctx) {
-                [[maybe_unused]] auto exec_data = ctx.receive_data(std::move(ev.data_), ev.sz);
-                // Send ACK/NACK PACK together with exec_data
+                auto [sz, buffer] = ctx.receive_data(std::move(ev.data_), ev.sz);
+                auto crc          = crc16_calc(crcRegInit, buffer.begin(), buffer.begin() + sz);
+
+                buffer[sz]     = static_cast<uint8_t>((crc & 0xff00) >> 8);
+                buffer[sz + 1] = static_cast<uint8_t>(crc & 0xff);
+                //   Send ACK/NACK/GET message PACK together with exec_data
+                ctx.uart_msg_transmit_(std::span<uint8_t>(buffer.data(), sz + 2));
             };
 
             auto check_address = [](SysCtx& ctx) {

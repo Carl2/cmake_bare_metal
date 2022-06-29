@@ -16,7 +16,9 @@ namespace msg
 constexpr static size_t CRC_SIZE             = 2;
 constexpr static size_t UART_BUFFER_MAX_SIZE = 50 + CRC_SIZE;
 constexpr static uint8_t HDR_SZ              = 6;
-using Uart_buffer_t                          = std::array<uint8_t, UART_BUFFER_MAX_SIZE>;
+using Uart_value_t                           = uint8_t;
+using Uart_buffer_t                          = std::array<Uart_value_t, UART_BUFFER_MAX_SIZE>;
+using Uart_buffer_view                       = std::span<Uart_value_t>;
 
 ///////////////////////////////////////////////////////////////////////////////
 //                              Message headers/payload                      //
@@ -64,7 +66,7 @@ template<typename F>
 concept is_data_receive_fn = requires(F& fn, const msg::Header& hdr,  std::span<const uint8_t> data, std::span<uint8_t> ret_val)
 {
     requires std::invocable<F,const msg::Header& , std::span<const uint8_t>>;
-    {fn(hdr, data )} -> std::convertible_to<std::span<const uint8_t>>;
+    {fn(hdr, data )} -> std::convertible_to<std::pair<size_t, Uart_buffer_t>>;
 };
 // clang-format on
 
@@ -74,7 +76,7 @@ concept is_data_receive_fn = requires(F& fn, const msg::Header& hdr,  std::span<
 
 // clang-format off
 template <std::invocable<uint16_t> message_size_fn_t,
-          std::invocable<std::string_view> uart_out_t,
+          std::invocable<Uart_buffer_view> uart_out_t,
           is_data_receive_fn data_recv_fn,
           //std::invocable<const msg::Header& , std::span<const uint8_t>> data_recv_fn,
           is_address_check address_check_fn >
@@ -128,7 +130,7 @@ struct SystemContext
         auto crc_vals     = msg_payload.last<2>();
         auto expected_crc = bin::convert_nbo<uint16_t>(crc_vals.begin());
 
-        auto crc = msg::crc16_single_little_endian(0xcafe, hdr.id);
+        auto crc = msg::crc16_single_little_endian(crcRegInit, hdr.id);
         crc      = msg::crc16_single_little_endian(crc, hdr.cmd);
         crc      = msg::crc16_single_little_endian(crc, hdr.len);
 

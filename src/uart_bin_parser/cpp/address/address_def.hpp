@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <optional>
 #include <span>
+#include "msg_def.hpp"
 
 namespace uart
 {
@@ -30,7 +31,7 @@ struct EvEnablePinTriggered
 //                                  Context                                  //
 ///////////////////////////////////////////////////////////////////////////////
 
-template <std::invocable<std::string_view> uart_out_t>
+template <std::invocable<msg::Uart_buffer_view> uart_out_t>
 struct AddressContext
 {
 
