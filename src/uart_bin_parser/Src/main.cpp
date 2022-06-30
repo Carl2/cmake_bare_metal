@@ -21,6 +21,7 @@
 #include "main.h"
 #include <array>
 #include <string_view>
+#include "address/address_setup_com.hpp"
 #include "msg_def.hpp"
 #include "msg_sml.hpp"
 /* Private includes ----------------------------------------------------------*/
@@ -53,6 +54,7 @@ namespace
 {
 
 msg::Uart_buffer_t uart_data;
+// uart::AddressSetup address_sm{uart::AddressContext{}};
 
 struct Receive_data
 {
@@ -64,19 +66,47 @@ Receive_data recv_data;
 
 volatile bool msg_recv_flag{};
 
-auto uart_sync_send = [](std::string_view view) {
+auto uart_sync_send = [](msg::Uart_buffer_view view) {
     msg::Uart_buffer_t buffer;
     memcpy(buffer.data(), view.data(), view.size());
     HAL_UART_Transmit(&huart1, buffer.data(), static_cast<uint16_t>(view.size()), 10);
 };
 
+// Setting up Address statemachine
+// TODO: This should be moved to some other nice place.
+// uart::AddressContext addr_ctx{uart_sync_send};
+// auto address_sm         = uart::AddressSetup<decltype(addr_ctx)>{std::move(addr_ctx)};
+auto address_sm = uart::AddressSetup{uart::AddressContext{uart_sync_send}};
+// auto address_setup_item = msg::make_cmd_item<msg::GuppiCmd::CMD_ENABLE_ADDRESS_SETUP>(
+//     uart::get_address_setup_callback(address_sm));
+// clang-format off
+auto cmds = msg::make_Guppi_protocol(
+    // Used for Set address
+    msg::make_cmd_item<msg::GuppiCmd::CMD_ENABLE_ADDRESS_SETUP>(
+        uart::get_enable_address_setup_callback(address_sm)),
+    msg::make_cmd_item<msg::GuppiCmd::CMD_DISABLE_ADDRESS_SETUP>(
+        uart::get_disable_address_setup_callback(address_sm)),
+    msg::make_cmd_item<msg::GuppiCmd::CMD_SET_PRINTHEAD_ADDRESS>(
+        uart::get_address_setup_callback(address_sm)),
+    // Get uuid
+    msg::make_cmd_item<msg::GuppiCmd::CMD_GET_UUID>(
+        uart::get_UUID_callback(address_sm)),
+    // Fake Enable pin
+    msg::make_cmd_item<msg::GuppiCmd::DEBUG_ENABLE_PIN >(
+        uart::get_debug_pin_toggle(address_sm))
+
+                                     );
+// clang-format on
+
+// When a recieve message data is called, the message has this as destination.
+// TODO: see if matching hdr.len == view.size()...
 auto receive_message_data = [](const msg::Header& hdr, std::span<const uint8_t> view) {
-    static_cast<void>(hdr);
-    msg::Uart_buffer_t buffer;
-    memcpy(buffer.data(), view.data(), view.size());
-    HAL_UART_Transmit(&huart1, buffer.data(), static_cast<uint16_t>(view.size()), 10);
-    // auto val = cmd_parser(hdr.cmd, view);
-    return view;
+    // msg::Uart_buffer_t buffer;
+    msg::Uart_buffer_t ret_buff{};
+    msg::OptArgs optArg((hdr.len > 0 ? std::optional(view) : std::nullopt));
+    auto sz = exec_cmd(cmds, msg::command_transform(hdr.cmd), std::move(optArg), ret_buff.begin(),
+                       ret_buff.end());
+    return std::make_pair(sz, ret_buff);
 };
 
 auto abort_uart_rx = []() -> void {
@@ -90,11 +120,6 @@ auto uart_irq_fn = [](uint16_t sz) {
     {
         Error_Handler();
     }
-};
-
-auto check_address = [](uint16_t address) -> bool {
-    static_cast<void>(address);
-    return true;
 };
 
 auto timer_toggle = [](bool state) -> void {
@@ -122,7 +147,9 @@ static void MX_USART1_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-msg::MainMachine m_sm{msg::SystemContext{uart_irq_fn, uart_sync_send, receive_message_data, check_address, abort_uart_rx, timer_toggle}};
+// clang-format off
+msg::MainMachine m_sm{msg::SystemContext{uart_irq_fn, uart_sync_send, receive_message_data, get_check_address_fn(address_sm), abort_uart_rx, timer_toggle}};
+// clang-format on
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 {
@@ -263,7 +290,7 @@ static void MX_TIM2_Init(void)
     htim2.Instance               = TIM2;
     htim2.Init.Prescaler         = 84 - 1;
     htim2.Init.CounterMode       = TIM_COUNTERMODE_UP;
-    htim2.Init.Period            = 200000 - 1;
+    htim2.Init.Period            = 100000 - 1;
     htim2.Init.ClockDivision     = TIM_CLOCKDIVISION_DIV1;
     htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
     if (HAL_TIM_Base_Init(&htim2) != HAL_OK)

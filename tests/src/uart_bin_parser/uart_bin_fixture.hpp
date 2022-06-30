@@ -9,7 +9,7 @@
 struct Callback_values
 {
     uint16_t recv_irq_sz{};
-    std::string sent_data{};
+    msg::Uart_buffer_view sent_data{};
 
     // std::span<const uint8_t> recv_data;
     struct Recv_data
@@ -27,11 +27,12 @@ struct Callback_values
 namespace
 {
 Callback_values cb{};
-std::array<uint8_t, 4> ret_val = {0x00, 0x00, 0x00, 0x00};
+msg::Uart_buffer_t ret_val = {0x00, 0x00, 0x00, 0x00};
 
 auto uart_irq_fn    = [](uint16_t sz) { cb.recv_irq_sz = sz; };
-auto uart_sync_send = [](std::string_view view) {
-    fmt::print(" {}", view);
+auto uart_sync_send = [](msg::Uart_buffer_view view) {
+    // fmt::print(" {}", view);
+    // TODO: Create string_view from the buffer_view
     cb.sent_data = view;
 };
 auto receive_message_data = [](const msg::Header& hdr, std::span<const uint8_t> data) {
@@ -39,7 +40,7 @@ auto receive_message_data = [](const msg::Header& hdr, std::span<const uint8_t> 
     // So this data is only valid until a new payload is recieved.
     cb.recv_data.hdr       = hdr;
     cb.recv_data.data_span = data;
-    return ret_val;
+    return std::make_pair(4, ret_val);
 };
 
 auto check_address = [](uint16_t address) {
