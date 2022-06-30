@@ -17,6 +17,14 @@ enum class GuppiCmd : uint16_t
     DEBUG_ENABLE_PIN          = 999
 };
 
+enum class AddressMode : uint8_t
+{
+    TO_THIS         = 0,
+    BROADCAST       = 1,
+    NOT_APPLICABALE = 255
+
+};
+
 /**
  *  \brief Transform a number to a enum.
  *

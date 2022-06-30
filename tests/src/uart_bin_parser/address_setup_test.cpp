@@ -46,16 +46,16 @@ TEST(address_setup_test, address_check_test)
 
         auto fn = uart::get_check_address_fn(address_sm);
 
-        ASSERT_TRUE(fn(uart::BROAD_CAST_ADDRESS));
-        ASSERT_TRUE(fn(0x00'01));
-        ASSERT_FALSE(fn(0x00'02));
+        ASSERT_EQ(fn(uart::BROAD_CAST_ADDRESS), msg::AddressMode::BROADCAST);
+        ASSERT_EQ(fn(0x00'01), msg::AddressMode::TO_THIS);
+        ASSERT_EQ(fn(0x00'02), msg::AddressMode::NOT_APPLICABALE);
     }
     {
-        uart::AddressContext ctx{debug_msg};  // Setting address to 1..
+        uart::AddressContext ctx{debug_msg};
         uart::AddressSetup address_sm{std::move(ctx)};
         auto fn = uart::get_check_address_fn(address_sm);
-        ASSERT_TRUE(fn(uart::BROAD_CAST_ADDRESS));
-        ASSERT_FALSE(fn(0x00'01));
+        ASSERT_EQ(fn(uart::BROAD_CAST_ADDRESS), msg::AddressMode::BROADCAST);
+        ASSERT_EQ(fn(0x00'01), msg::AddressMode::NOT_APPLICABALE);
     }
 }
 

@@ -21,7 +21,8 @@ struct Callback_values
     };
     Recv_data recv_data;
     uint16_t address{};
-    bool ret_address_check{true};  // Return from address check
+    // Return from address check
+    msg::AddressMode ret_address_check{msg::AddressMode::TO_THIS};
 };
 
 namespace

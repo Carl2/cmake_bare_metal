@@ -5,6 +5,7 @@
 #include <span>
 #include <string>
 #include "bin_parser.hpp"
+#include "command_parser.hpp"
 #include "crc16_calc.hpp"
 
 namespace msg
@@ -29,6 +30,7 @@ struct Header
     uint16_t cmd;
     uint16_t len;
 
+    msg::AddressMode mode;
     // The size of the header..
     constexpr static size_t size = sizeof(id) + sizeof(cmd) + sizeof(len);
 };
@@ -59,7 +61,8 @@ struct EvMsg
 template<typename F>
 concept is_address_check = requires(F& fn,uint16_t address)
 {
-    {fn(address)} -> std::convertible_to<bool>;
+    // The check address function needs to return an address mode.
+    {fn(address)} -> std::convertible_to<msg::AddressMode>;
 };
 
 template<typename F>
@@ -141,7 +144,14 @@ struct SystemContext
         return isCrcOk;
     }
 
-    bool is_our_msg() const { return address_check_(hdr.id); }
+    void set_address_mode(msg::AddressMode mode) { hdr.mode = mode; }
+
+    msg::AddressMode is_our_msg() const
+    {
+
+        return address_check_(hdr.id);
+        // return ;
+    }
 
     Header hdr{};
     Payload msg_data{};

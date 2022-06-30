@@ -107,10 +107,14 @@ auto receive_message_data = [](const msg::Header& hdr, std::span<const uint8_t> 
     auto sz = exec_cmd(cmds, msg::command_transform(hdr.cmd), std::move(optArg), ret_buff.begin(),
                        ret_buff.end());
 
-    // The command parser handler will redirect the message to
-    // its rightful owner.
-    // auto val = cmd_parser(hdr.cmd, view);
-    return std::make_pair(sz, ret_buff);
+    if (hdr.mode == msg::AddressMode::BROADCAST)
+    {
+        return std::make_pair(static_cast<size_t>(0), ret_buff);
+    }
+    else
+    {
+        return std::make_pair(sz, ret_buff);
+    }
 };
 auto uart_irq_fn = [](uint16_t sz) {
     // TODO: Need to check that size is reasonable.
