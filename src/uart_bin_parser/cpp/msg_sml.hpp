@@ -13,10 +13,10 @@ namespace msg
 {
 
 template <typename SysCtx>
-struct MainMachine
+struct UartPacketHandler
 {
 
-    MainMachine(SysCtx&& ctx) : ctx_{ctx}, msg_sm_{MsgMachine{}, ctx_} {}
+    UartPacketHandler(SysCtx&& ctx) : ctx_{ctx}, msg_sm_{MsgMachine{}, ctx_} {}
 
     struct MsgMachine
     {
@@ -34,7 +34,7 @@ struct MainMachine
             };
 
             auto ignore_message = [](SysCtx& ctx) {
-                ctx.uart_msg_init_(HDR_SZ);
+                ctx.uart_msg_init_(HDR_SZ);  // Next is the Header again.
             };
             auto receive_message = [](auto ev, SysCtx& ctx) {
                 auto [sz, buffer] = ctx.receive_data(std::move(ev.data_), ev.sz);

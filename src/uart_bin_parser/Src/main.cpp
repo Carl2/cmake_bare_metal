@@ -146,7 +146,7 @@ static void MX_USART1_UART_Init(void);
 int main(void)
 {
     // clang-format off
-    msg::MainMachine m_sm{
+    msg::UartPacketHandler m_sm{
         msg::SystemContext{uart_irq_fn, uart_sync_send, receive_message_data, get_check_address_fn(address_sm)}
     };
     // clang-format on

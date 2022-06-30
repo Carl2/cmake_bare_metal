@@ -61,6 +61,6 @@ class Uart_comm_test : public ::testing::Test
 
     sysctx_t ctx{uart_irq_fn, uart_sync_send, receive_message_data, check_address};
 
-    msg::MainMachine<sysctx_t> m_sm{std::move(ctx)};
+    msg::UartPacketHandler<sysctx_t> m_sm{std::move(ctx)};
     //     msg::SystemContext};
 };
