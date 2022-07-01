@@ -4,6 +4,7 @@
 #include <span>
 #include <tuple>
 #include <variant>
+#include "bin_parser.hpp"
 
 namespace msg
 {
@@ -14,6 +15,7 @@ enum class GuppiCmd : uint16_t
     CMD_DISABLE_ADDRESS_SETUP = 13,
     CMD_SET_PRINTHEAD_ADDRESS = 14,
     CMD_GET_UUID              = 19,
+    CMD_ACK                   = 46,
     DEBUG_ENABLE_PIN          = 999
 };
 
@@ -25,6 +27,45 @@ enum class AddressMode : uint8_t
 
 };
 
+template <GuppiCmd Cmd>
+struct msg_generator
+{};
+
+template <>
+struct msg_generator<GuppiCmd::CMD_ACK>
+{
+    static auto generate_msg_fn()
+    {
+        return [](std::input_iterator auto start_iter, auto id) {
+            {  // ID
+
+                const auto& [msb, lsb] = bin::to_bytes_nbo<uint16_t>(id);
+
+                *(start_iter++) = msb;
+                *(start_iter++) = lsb;
+            }
+            {
+                const auto& [msb, lsb] = bin::to_bytes_nbo<uint16_t>(
+                    static_cast<std::underlying_type_t<GuppiCmd>>(GuppiCmd::CMD_ACK));
+                *(start_iter++) = msb;
+                *(start_iter++) = lsb;
+            }
+            return 6;  // Header is id,cmd,len (6 bytes)
+        };
+    }
+};
+
+// template <typename Iter>
+// auto make_ack_msg(Iter iter)
+// {
+//     return msg_generator<Iter, GuppiCmd::CMD_ACK>::generate_msg(iter);
+// }
+
+template <GuppiCmd Cmd>
+auto make_msg_fn()
+{
+    return msg_generator<Cmd>::generate_msg_fn();
+}
 /**
  *  \brief Transform a number to a enum.
  *

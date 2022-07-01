@@ -115,15 +115,19 @@ decltype(auto) make_address_setup(AddressContext<F>&& ctx)
 template <typename Context_t>
 constexpr decltype(auto) get_enable_address_setup_callback(AddressSetup<Context_t>& address_sm)
 {
-    return [&address_sm](msg::OptArgs args, auto start_iter, auto end_iter) {
-        static_cast<void>(args);
-        static_cast<void>(start_iter);
-        static_cast<void>(end_iter);
-
-        // generate_msg(start_iter, msg::GuppiCmd::ACK, {});
-        // constexpr static std::string_view out = "<Enable address>\n\r";
-        // std::copy(out.begin(), out.end(), start_iter);
+    return [&address_sm]([[maybe_unused]] msg::OptArgs args, std::input_iterator auto start_iter,
+                         [[maybe_unused]] auto end_iter) {
         address_sm.enable_address_setup();
+        auto opt_id = address_sm.get_address();
+        if (opt_id)
+        {
+            return msg::make_msg_fn<msg::GuppiCmd::CMD_ACK>()(start_iter, *opt_id);
+        }
+
+        // msg::generate_msg(start_iter, msg::GuppiCmd::ACK, {});
+        //  constexpr static std::string_view out = "<Enable address>\n\r";
+        //  std::copy(out.begin(), out.end(), start_iter);
+
         return 0;
     };
 }
