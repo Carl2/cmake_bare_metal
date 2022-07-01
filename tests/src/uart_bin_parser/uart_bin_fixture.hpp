@@ -21,7 +21,8 @@ struct Callback_values
     };
     Recv_data recv_data;
     uint16_t address{};
-    bool ret_address_check{true};  // Return from address check
+    // Return from address check
+    msg::AddressMode ret_address_check{msg::AddressMode::TO_THIS};
 };
 
 namespace
@@ -68,6 +69,6 @@ class Uart_comm_test : public ::testing::Test
 
     sysctx_t ctx{uart_irq_fn, uart_sync_send, receive_message_data, check_address, abort_rx, tim_toggle};
 
-    msg::MainMachine<sysctx_t> m_sm{std::move(ctx)};
+    msg::UartPacketHandler<sysctx_t> m_sm{std::move(ctx)};
     //     msg::SystemContext};
 };

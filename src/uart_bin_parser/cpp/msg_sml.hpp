@@ -13,10 +13,10 @@ namespace msg
 {
 
 template <typename SysCtx>
-struct MainMachine
+struct UartPacketHandler
 {
 
-    MainMachine(SysCtx&& ctx) : ctx_{ctx}, msg_sm_{MsgMachine{}, ctx_} {}
+    UartPacketHandler(SysCtx&& ctx) : ctx_{ctx}, msg_sm_{MsgMachine{}, ctx_} {}
 
     constexpr static auto WaitForHdr = sml::state<class WaitForHdr>;
     constexpr static auto WaitForMsg = sml::state<class WaitForMsg>;
@@ -33,31 +33,35 @@ struct MainMachine
             auto process_hdr = [](const auto& ev, SysCtx& ctx) {
                 ctx.receive_header(std::span(ev.data_.begin(), ev.sz));
             };
-
+            
             auto process_body = [](auto ev, SysCtx& ctx) {
                 auto [sz, buffer] = ctx.receive_data(std::move(ev.data_), ev.sz);
-                auto crc          = crc16_calc(crcRegInit, buffer.begin(), buffer.begin() + sz);
-
-                buffer[sz]     = static_cast<uint8_t>((crc & 0xff00) >> 8);
-                buffer[sz + 1] = static_cast<uint8_t>(crc & 0xff);
-                //   Send ACK/NACK/GET message PACK together with exec_data
-                ctx.uart_msg_transmit_(std::span<uint8_t>(buffer.data(), sz + 2));
+                // If there is no reply , then size is 0.
+                if (sz != 0)
+                {
+                    auto crc       = crc16_calc(crcRegInit, buffer.begin(), buffer.begin() + sz);
+                    buffer[sz]     = static_cast<uint8_t>((crc & 0xff00) >> 8);
+                    buffer[sz + 1] = static_cast<uint8_t>(crc & 0xff);
+                    //   Send ACK/NACK/GET message PACK together with exec_data
+                    ctx.uart_msg_transmit_(std::span<uint8_t>(buffer.data(), sz + 2));
+                }
             };
 
             auto start_timer = [](SysCtx& ctx) {
                 ctx.toggle_timer_fn_(true);
-                // ctx.uart_msg_transmit_("start timer\r\n");
             };
 
             auto stop_timer = [](SysCtx& ctx) {
                 ctx.toggle_timer_fn_(false);
-                // ctx.uart_msg_transmit_("stop timer\r\n");
             };
 
             auto check_addr = [](SysCtx& ctx) {
                 static_cast<void>(ctx);
+                auto address_mode = ctx.is_our_msg();
+                ctx.set_address_mode(address_mode);
                 // Only messsages that are destined to us are important
-                return ctx.is_our_msg();
+                return (address_mode == msg::AddressMode::BROADCAST or
+                        address_mode == msg::AddressMode::TO_THIS);
             };
 
             auto check_crc = [](const auto& ev, SysCtx& ctx) {
@@ -71,11 +75,10 @@ struct MainMachine
 
             auto reset_rx = [](SysCtx& ctx) {
                 ctx.abort_uart_rx_();
-                // ctx.uart_msg_transmit_("abort rx\r\n");
             };
 
             auto handle_timeout = [](SysCtx& ctx) {
-                ctx.uart_msg_transmit_("timed out\r\n");
+                static_cast<void>(ctx);
             };
 
             // clang-format off

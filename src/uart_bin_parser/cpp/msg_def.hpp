@@ -5,6 +5,7 @@
 #include <span>
 #include <string>
 #include "bin_parser.hpp"
+#include "command_parser.hpp"
 #include "crc16_calc.hpp"
 
 namespace msg
@@ -29,6 +30,7 @@ struct Header
     uint16_t cmd;
     uint16_t len;
 
+    msg::AddressMode mode;
     // The size of the header..
     constexpr static size_t size = sizeof(id) + sizeof(cmd) + sizeof(len);
 };
@@ -62,7 +64,8 @@ struct EvTimeout
 template<typename F>
 concept is_address_check = requires(F& fn,uint16_t address)
 {
-    {fn(address)} -> std::convertible_to<bool>;
+    // The check address function needs to return an address mode.
+    {fn(address)} -> std::convertible_to<msg::AddressMode>;
 };
 
 template<typename F>
@@ -116,7 +119,6 @@ struct SystemContext
         msg_data.payload = message;
         std::span<const uint8_t> recv_span(msg_data.payload.begin(), sz);
         auto exec_data = data_recv_fn_(hdr, recv_span);
-        uart_msg_transmit_("body received\n\r");
         return exec_data;
     }
 
@@ -125,10 +127,6 @@ struct SystemContext
         hdr.id  = bin::convert_nbo<uint16_t>(data.begin());
         hdr.cmd = bin::convert_nbo<uint16_t>(data.begin() + 2);
         hdr.len = bin::convert_nbo<uint16_t>(data.begin() + 4);
-
-        // uart_msg_transmit_("HEADER RX\n\r");
-        // uart_msg_transmit_(std::to_string(hdr.len));
-        // uart_msg_transmit_("\n\r");
         uart_rx_init_(hdr.len + 2);  // Setting the message part
 
     }
@@ -152,7 +150,14 @@ struct SystemContext
         return isCrcOk;
     }
 
-    bool is_our_msg() const { return address_check_(hdr.id); }
+    void set_address_mode(msg::AddressMode mode) { hdr.mode = mode; }
+
+    msg::AddressMode is_our_msg() const
+    {
+
+        return address_check_(hdr.id);
+        // return ;
+    }
 
     Header hdr{};
     Payload msg_data{};

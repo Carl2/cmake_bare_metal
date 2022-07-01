@@ -59,7 +59,7 @@ TEST_F(Uart_comm_test, header_check)
 TEST_F(Uart_comm_test, check_address_test)
 {
     cb                   = {};
-    cb.ret_address_check = true;  // Its true by default..
+    cb.ret_address_check = msg::AddressMode::BROADCAST;  // BROADCAST message
     msg::Uart_buffer_t msg{0xaa, 0xaa, 0x00, 0x01, 0x00, 0x06};
     m_sm.new_message(msg, msg::HDR_SZ);
     ASSERT_EQ(cb.address, 0);  // to show that address check happens not when the header is received, but when the body arrives
@@ -76,7 +76,8 @@ TEST_F(Uart_comm_test, check_address_test)
 
     {
         msg::Uart_buffer_t msg2{0x00, 0x01, 0x00, 0x01, 0x00, 0x01};
-        cb.ret_address_check = false;  // Now returning false, meaning we should ignore it.
+        cb.ret_address_check =
+            msg::AddressMode::NOT_APPLICABALE;  // NOT_APPLICABLE meaning we should ignore it.
         m_sm.new_message(msg2, msg2.size());
         ASSERT_EQ(cb.recv_irq_sz, 3);  // 1 byte + 2 byte CRC
     }
@@ -92,6 +93,13 @@ TEST_F(Uart_comm_test, check_address_test)
         ASSERT_EQ(cb.recv_data.hdr.len, 0);
         ASSERT_TRUE(m_sm.is_wait4header());
         ASSERT_EQ(cb.recv_irq_sz, msg::HDR_SZ);  // Check reset to wait for Header
+    }
+    cb = {};
+    {
+        msg::Uart_buffer_t msg2{0x00, 0x01, 0x00, 0x01, 0x00, 0x01};
+        cb.ret_address_check = msg::AddressMode::TO_THIS;  // To_this printhead
+        m_sm.new_message(msg2, msg2.size());
+        ASSERT_EQ(cb.recv_irq_sz, 3);  // 1 byte + 2 byte CRC
     }
 }
 

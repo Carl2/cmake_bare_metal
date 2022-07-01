@@ -106,7 +106,15 @@ auto receive_message_data = [](const msg::Header& hdr, std::span<const uint8_t> 
     msg::OptArgs optArg((hdr.len > 0 ? std::optional(view) : std::nullopt));
     auto sz = exec_cmd(cmds, msg::command_transform(hdr.cmd), std::move(optArg), ret_buff.begin(),
                        ret_buff.end());
-    return std::make_pair(sz, ret_buff);
+
+    if (hdr.mode == msg::AddressMode::BROADCAST)
+    {
+        return std::make_pair(static_cast<size_t>(0), ret_buff);
+    }
+    else
+    {
+        return std::make_pair(sz, ret_buff);
+    }
 };
 
 auto abort_uart_rx = []() -> void {
@@ -148,7 +156,7 @@ static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN 0 */
 
 // clang-format off
-msg::MainMachine m_sm{msg::SystemContext{uart_irq_fn, uart_sync_send, receive_message_data, get_check_address_fn(address_sm), abort_uart_rx, timer_toggle}};
+msg::UartPacketHandler m_sm{msg::SystemContext{uart_irq_fn, uart_sync_send, receive_message_data, get_check_address_fn(address_sm), abort_uart_rx, timer_toggle}};
 // clang-format on
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)

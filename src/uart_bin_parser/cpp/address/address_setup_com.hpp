@@ -115,15 +115,19 @@ decltype(auto) make_address_setup(AddressContext<F>&& ctx)
 template <typename Context_t>
 constexpr decltype(auto) get_enable_address_setup_callback(AddressSetup<Context_t>& address_sm)
 {
-    return [&address_sm](msg::OptArgs args, auto start_iter, auto end_iter) {
-        static_cast<void>(args);
-        static_cast<void>(start_iter);
-        static_cast<void>(end_iter);
-        //
-        // generate_msg(start_iter, msg::GuppiCmd::ACK, {});
-        // constexpr static std::string_view out = "<Enable address>\n\r";
-        // std::copy(out.begin(), out.end(), start_iter);
+    return [&address_sm]([[maybe_unused]] msg::OptArgs args, std::input_iterator auto start_iter,
+                         [[maybe_unused]] auto end_iter) {
         address_sm.enable_address_setup();
+        auto opt_id = address_sm.get_address();
+        if (opt_id)
+        {
+            return msg::make_msg_fn<msg::GuppiCmd::CMD_ACK>()(start_iter, *opt_id);
+        }
+
+        // msg::generate_msg(start_iter, msg::GuppiCmd::ACK, {});
+        //  constexpr static std::string_view out = "<Enable address>\n\r";
+        //  std::copy(out.begin(), out.end(), start_iter);
+
         return 0;
     };
 }
@@ -135,7 +139,6 @@ constexpr decltype(auto) get_disable_address_setup_callback(AddressSetup<Context
         static_cast<void>(args);
         static_cast<void>(start_iter);
         static_cast<void>(end_iter);
-
         // constexpr static std::string_view out = "<Disable address>\n\r";
         // std::copy(out.begin(), out.end(), start_iter);
         address_sm.disable_address_setup();
@@ -188,14 +191,16 @@ auto get_debug_pin_toggle(AddressSetup<Context_t>& address_sm)
 
     return [&address_sm](msg::OptArgs args, auto start_iter, [[maybe_unused]] auto end_iter) {
         constexpr static std::string_view out = "<Toggle PIN>";
+        size_t sz                             = 0;
         if (args)
         {
             auto pin_state = bin::convert_nbo<uint8_t>((*args).begin());
             address_sm.enable_pin_state(pin_state > 0 ? true : false);
 
             std::copy(out.begin(), out.end(), start_iter);
+            sz = out.size();
         }
-        return out.size();
+        return sz;
     };
 }
 
@@ -214,10 +219,12 @@ auto get_debug_pin_toggle(AddressSetup<Context_t>& address_sm)
 template <typename Context_t>
 auto get_check_address_fn(AddressSetup<Context_t>& address_sm)
 {
-    return [&address_sm](uint16_t address) -> bool {
+    return [&address_sm](uint16_t address) -> msg::AddressMode {
         // clang-format off
-        return address == BROAD_CAST_ADDRESS ? true :
-                address_sm.compare_address(address) ? true : false;
+
+        return address == BROAD_CAST_ADDRESS ? msg::AddressMode::BROADCAST :
+                address_sm.compare_address(address) ?
+                msg::AddressMode::TO_THIS : msg::AddressMode::NOT_APPLICABALE;
         // clang-format on
     };
 }
