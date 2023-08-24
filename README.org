@@ -1,8 +1,5 @@
 #+OPTIONS: ^:nil
 #+AUTHOR: Calle Olsen
-:PROPERTIES:
-:PH-DIR:   /home/calle/git/PH_WIP
-:END:
 #+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-bigblow.setup
 #+author: calle
 #+title: cmake bare metal (cbm)
@@ -236,6 +233,22 @@
 
    there is also a common, which are used by all the targets and has common functionality.
 
+** Flashing
+
+using *ccmake* one can set what kind of adapter to use (e.g cmsis-dap)
+and the location of the openocd. This can be used to create a
+flash target for the project.
+
+#+begin_src cmake
+  make_openocd_target(NAME ${TARGET_BIN}
+    OPENOCD_PATH ${OPENOCD_PATH}
+    OPENOCD_INTERFACE ${OPENOCD_INTERFACE}
+    OPENOCD_TARGET stm32f4x
+  )
+#+end_src
+
+Here is an example when using /stm32f4/ device. See [[file:src/black_pill/CMakeLists.txt::make_openocd_target(NAME ${TARGET_BIN}][black_pill target]]
+
 
 * Add a new Project (from StmCubeIde)
   The idea here is to use the good features of /StmCubeIde/ for
@@ -329,7 +342,9 @@
 
 
 
-
 ** TODO Adding a new MCU
 * TODO Tests
-  Not implemented yet...
+
+Unit test are compiled using /ExternalProject_add/ and is built
+nativly. To make it even simpler [[https://conan.io/][conan]] is used (both conan1 and conan2
+is supported).

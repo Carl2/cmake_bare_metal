@@ -1,13 +1,12 @@
 [generators]
-#cmake
 cmake_find_package
 compiler_args
 
 
 [requires]
     gtest/1.11.0
-    fmt/8.0.1
-    sml/1.1.4
+    fmt/9.1.0
+    sml/1.1.6
 [options]
 
 [imports]

@@ -14,15 +14,31 @@ set(CMAKE_BUILD_TYPE "Debug")
 
 message(STATUS "PB_WIP_DIR ${PB_WIP_DIR} ${PB_SOURCE_DIR}")
 
+
 option(ENABLE_CONAN "Use Conan for dependency management" ON)
 if(ENABLE_CONAN)
+
   include(${PB_WIP_DIR}/cmake/Conan.cmake)
-  run_conan()
+  download_conan_help()
+
+  conan_version(CONAN_VERSION)
+  generate_conan_files(VERSION ${CONAN_VERSION})
+
+
+
 endif()
-message(STATUS "${CMAKE_BINARY_DIR}" )
+
+# option(ENABLE_CONAN "Use Conan for dependency management" ON)
+# if(ENABLE_CONAN)
+#   include(${PB_WIP_DIR}/cmake/Conan.cmake)
+#   run_conan()
+# endif()
+# message(STATUS "${CMAKE_BINARY_DIR}" )
 
 
-
+find_package(GTest)
+find_package(fmt)
+find_package(sml)
 
 #find_package( Boost  COMPONENTS system program_options REQUIRED )
 
