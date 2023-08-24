@@ -1,0 +1,12 @@
+[generators]
+  CMakeToolchain
+  CMakeDeps
+  PkgConfigDeps
+
+[requires]
+    gtest/1.11.0
+    fmt/9.1.0
+    sml/1.1.6
+[options]
+
+[imports]

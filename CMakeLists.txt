@@ -22,7 +22,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/mcu_conf/${MCU_CONFIG})
 #                           This will be used to create make ocd_flash
 ###############################################################################
 set(OPENOCD_PATH "/usr/bin" CACHE STRING "Where to find openocd")
-set(OPENOCD_INTERFACE "picoprobe" CACHE STRING "Interface to use ")
+set(OPENOCD_INTERFACE "cmsis-dap" CACHE STRING "Interface to use ")
 
 
 add_library(compile_flags INTERFACE)

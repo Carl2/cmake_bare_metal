@@ -26,7 +26,12 @@ set(SRC
 
   )
 
+
 add_executable(${TARGET_BIN} ${SRC})
+
+
+install(TARGETS ${TARGET_BIN}
+  RUNTIME DESTINATION ${CMAKE_BINARY_DIR}/bin)
 
 
 target_link_libraries(${TARGET_BIN} PRIVATE
@@ -35,5 +40,6 @@ target_link_libraries(${TARGET_BIN} PRIVATE
   compile_flags
   compile_definitions
   )
+
 
 make_mcu_cmd_target(NAME ${TARGET_BIN})

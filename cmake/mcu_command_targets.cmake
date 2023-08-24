@@ -10,7 +10,7 @@ function(make_mcu_cmd_target)
 
   add_custom_command(
     TARGET ${TARGET_NAME} POST_BUILD
-    COMMAND arm-none-eabi-objcopy  -O ihex ${TARGET_NAME} ${TARGET_NAME}.hex
+    COMMAND arm-none-eabi-objcopy  -O ihex ${TARGET_NAME} ${TARGET_NAME}.hex && arm-none-eabi-objcopy  -O binary ${TARGET_NAME} ${TARGET_NAME}.bin
     VERBATIM
   )
 
@@ -22,7 +22,11 @@ function(make_mcu_cmd_target)
     )
 
 
+  install(FILES ${BIN_DIR}/${TARGET_NAME}.hex
+    DESTINATION ${CMAKE_BINARY_DIR}/bin)
 
+  install(FILES ${BIN_DIR}/${TARGET_NAME}.bin
+    DESTINATION ${CMAKE_BINARY_DIR}/bin)
 
 
 endfunction()
