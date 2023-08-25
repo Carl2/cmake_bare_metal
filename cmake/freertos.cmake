@@ -9,7 +9,7 @@ function(freertos_support)
   set(FREERTOS_DIR "${RTOS_DESTINATION}/FreeRtos")
   #set(FREERTOS_PORT GCC_ARM_CM0 CACHE STRING "")
 
-
+  message(STATUS "${CMAKE_SOURCE_DIR}/config")
   add_library(freertos_config INTERFACE)
   target_include_directories(freertos_config SYSTEM
       INTERFACE
@@ -19,15 +19,16 @@ function(freertos_support)
     target_compile_definitions(freertos_config
       INTERFACE
     )
-    set(FREERTOS_PORT "GCC_ARM_CM0")
-    set(FREERTOS_HEAP "3")
+    set(FREERTOS_PORT "GCC_ARM_CM4F")
+    set(FREERTOS_HEAP "4")
 
   FetchContent_Declare(FreeRtos_fetch
     GIT_REPOSITORY    https://github.com/FreeRTOS/FreeRTOS-Kernel.git
     GIT_TAG           fe005419f0d31264059c61a2f043a0b4e0f24076
     GIT_SHALLOW       True
+
     SOURCE_DIR        ${FREERTOS_DIR}
-    CMAKE_ARGS        -DFREERTOS_HEAP=3 -DFREERTOS_PORT=GCC_ARM_CM0
+    CMAKE_ARGS        -DFREERTOS_HEAP=4
     )
 
     FetchContent_MakeAvailable(FreeRtos_fetch)

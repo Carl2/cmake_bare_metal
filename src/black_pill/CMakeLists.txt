@@ -3,8 +3,11 @@
 ###############################################################################
 include(${CMAKE_SOURCE_DIR}/cmake/external_dep.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/mcu_command_targets.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/freertos.cmake)
 
 f4_HAL_support(DESTINATION "${CMAKE_SOURCE_DIR}/external/" CONFIG_DIR "${CMAKE_SOURCE_DIR}/src/black_pill/Inc" )
+
+
 ###############################################################################
 #                       Create the startup object (ASM)                       #
 ###############################################################################
@@ -26,6 +29,9 @@ set(SRC
 
   )
 
+freertos_support(
+ DESTINATION "${CMAKE_SOURCE_DIR}/external/"
+ )
 
 add_executable(${TARGET_BIN} ${SRC})
 
