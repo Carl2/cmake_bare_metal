@@ -30,7 +30,9 @@ set(SRC
   )
 
 freertos_support(
- DESTINATION "${CMAKE_SOURCE_DIR}/external/"
+  DESTINATION "${CMAKE_SOURCE_DIR}/external/"
+  CONFIG "${CMAKE_SOURCE_DIR}/config"
+  PORT "GCC_ARM_CM4F"
  )
 
 add_executable(${TARGET_BIN} ${SRC})
@@ -42,6 +44,8 @@ install(TARGETS ${TARGET_BIN}
 
 target_link_libraries(${TARGET_BIN} PRIVATE
   startup
+  freertos_kernel
+  freertos_kernel_port
   stm32F4_HAL_support_lib
   compile_flags
   compile_definitions

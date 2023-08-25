@@ -19,7 +19,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
+#include <FreeRTOS.h>
+#include <FreeRTOSConfig.h>
+#include <task.h>
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -93,7 +95,7 @@ int main(void)
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
-
+    vTaskStartScheduler();
     while (1)
     {
 

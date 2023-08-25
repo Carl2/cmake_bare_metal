@@ -4,22 +4,23 @@
 
 function(freertos_support)
   include(FetchContent)
-  cmake_parse_arguments(RTOS "" "DESTINATION" "EXTRA_LIBS" ${ARGN} )
-  set(LIB_NAME "freertos")
-  set(FREERTOS_DIR "${RTOS_DESTINATION}/FreeRtos")
-  #set(FREERTOS_PORT GCC_ARM_CM0 CACHE STRING "")
+  cmake_parse_arguments(RTOS "" "DESTINATION;CONFIG;PORT" "EXTRA_LIBS" ${ARGN} )
 
-  message(STATUS "${CMAKE_SOURCE_DIR}/config")
+  set(FREERTOS_DIR "${RTOS_DESTINATION}/FreeRtos")
+
+  message(STATUS "FreeRtos Config: ${RTOS_CONFIG} Port: ${RTOS_PORT}")
   add_library(freertos_config INTERFACE)
   target_include_directories(freertos_config SYSTEM
       INTERFACE
-      ${CMAKE_SOURCE_DIR}/config
+      ${RTOS_CONFIG}
     )
 
     target_compile_definitions(freertos_config
       INTERFACE
     )
-    set(FREERTOS_PORT "GCC_ARM_CM4F")
+    #set(FREERTOS_PORT "GCC_ARM_CM4F")
+    #set(FREERTOS_PORT GCC_ARM_CM4F CACHE STRING "")
+    set(FREERTOS_PORT ${RTOS_PORT})
     set(FREERTOS_HEAP "4")
 
   FetchContent_Declare(FreeRtos_fetch
@@ -28,14 +29,14 @@ function(freertos_support)
     GIT_SHALLOW       True
 
     SOURCE_DIR        ${FREERTOS_DIR}
-    CMAKE_ARGS        -DFREERTOS_HEAP=4
+    #CMAKE_ARGS        -DFREERTOS_HEAP=4
     )
 
     FetchContent_MakeAvailable(FreeRtos_fetch)
 
-    #add library
-
-
+    #Make sure the freertos is built with the right flags.
+    target_link_libraries(freertos_kernel_port PRIVATE compile_flags compile_definitions)
+    target_link_libraries(freertos_kernel PRIVATE compile_flags compile_definitions)
 
 
 endfunction(freertos_support)
