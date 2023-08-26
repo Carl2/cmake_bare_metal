@@ -249,6 +249,14 @@ flash target for the project.
 
 Here is an example when using /stm32f4/ device. See [[file:src/black_pill/CMakeLists.txt::make_openocd_target(NAME ${TARGET_BIN}][black_pill target]]
 
+to flash the device there exists a target *flash* or *ocd_flash*
+The first one is using /stlink/ and the other is using /openocd/
+
+#+HEADER: :eval never-export  :results output :wrap example :exports both
+#+begin_src bash :dir "/tmp"
+make ocd_flash
+#+end_src
+
 ** debug
 
 Debugging is done through openocd and appopriate adapter (e.g cmsis-dap using [[https://github.com/raspberrypi/picoprobe][picopropbe]])
