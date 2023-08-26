@@ -11,7 +11,7 @@ f4_HAL_support(DESTINATION "${CMAKE_SOURCE_DIR}/external/" CONFIG_DIR "${CMAKE_S
 ###############################################################################
 #                       Create the startup object (ASM)                       #
 ###############################################################################
-add_library(startup OBJECT Startup/startup_stm32f411retx.s)
+add_library(startup OBJECT Startup/startup_stm32f411ceux.s)
 
 
 ###############################################################################
@@ -26,6 +26,7 @@ set(SRC
   Src/system_stm32f4xx.c
   Src/syscalls.c
   Src/sysmem.c
+  Src/freertos.c
 
   )
 
