@@ -298,6 +298,11 @@ includes the ~OPENOCD_INTERFACE~ which is the adapter to use
 (cmsis-dap for example).
 
 
+** Freertos
+Freertos is included into the *black_pill* flavor.
+More on that later
+
+
 * Add a new Project (from StmCubeIde)
   The idea here is to use the good features of /StmCubeIde/ for
   configuration i.e clock setup and peripherals configuration.  So
