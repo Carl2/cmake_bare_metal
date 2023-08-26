@@ -25,9 +25,15 @@ set(OPENOCD_PATH "/usr/bin" CACHE STRING "Where to find openocd")
 set(OPENOCD_INTERFACE "cmsis-dap" CACHE STRING "Interface to use ")
 
 
+
 add_library(compile_flags INTERFACE)
 set_stm32_compiler_options(compile_flags)
 add_dependencies(compile_flags CBM_tests)
+
+#TODO: Add so one can choose using LTO
+add_compile_options(-flto)
+add_link_options(-flto)
+
 
 add_library(compile_definitions INTERFACE)
 set_stm32_compiler_definition(compile_definitions)

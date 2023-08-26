@@ -52,8 +52,10 @@ target_link_libraries(${TARGET_BIN} PRIVATE
   compile_definitions
   )
 
+install(TARGETS ${TARGET_BIN}
+    RUNTIME DESTINATION ${CMAKE_BINARY_DIR}/bin)
 
- make_mcu_cmd_target(NAME ${TARGET_BIN})
+make_mcu_cmd_target(NAME ${TARGET_BIN})
 
 make_openocd_target(NAME ${TARGET_BIN}
     OPENOCD_PATH ${OPENOCD_PATH}
