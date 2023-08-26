@@ -249,6 +249,46 @@ flash target for the project.
 
 Here is an example when using /stm32f4/ device. See [[file:src/black_pill/CMakeLists.txt::make_openocd_target(NAME ${TARGET_BIN}][black_pill target]]
 
+** debug
+
+Debugging is done through openocd and appopriate adapter (e.g cmsis-dap using [[https://github.com/raspberrypi/picoprobe][picopropbe]])
+after successful build there is a target called ~debug~ which will execute openocd,
+with the appropriate flags.
+#+HEADER: :eval never-export  :results output :wrap example :exports both
+#+begin_src bash :dir "/tmp"
+make debug
+#+end_src
+
+or even simpler.
+
+#+HEADER: :eval never-export  :results output :wrap example :exports both
+#+begin_src bash :dir "/tmp"
+make run_debug
+#+end_src
+
+The above command will open a tmux session in the terminal and split
+it in two, one side is the /openocd/ output, the other starts and
+initializes a gdb session using the adapter and the device.
+
+This of cource needs to be configured, which is done through cmake.
+For example the /black_pill/ target is configured as follows
+#+begin_src cmake
+  include(${CMAKE_SOURCE_DIR}/cmake/mcu_command_targets.cmake)
+  make_openocd_target(NAME ${TARGET_BIN}
+    OPENOCD_PATH ${OPENOCD_PATH}
+    OPENOCD_INTERFACE ${OPENOCD_INTERFACE}
+    OPENOCD_TARGET stm32f4x
+  )
+#+end_src
+
+The ~OPENOCD_TARGET~ needs to be configured to be the appropriate
+device which can be found in *openocd* source directory ~openocd/tcl/target/~
+
+The ~OPENOCD_PATH~ where to find the openocd, it is also a cached
+variable so if you run ~ccmake~ this variable can be set. That also
+includes the ~OPENOCD_INTERFACE~ which is the adapter to use
+(cmsis-dap for example).
+
 
 * Add a new Project (from StmCubeIde)
   The idea here is to use the good features of /StmCubeIde/ for
