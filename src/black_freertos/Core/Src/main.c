@@ -33,7 +33,10 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+/* I just dont want to use cmsis: 2.0 stuff.The Idea is
+   to run FreeRtos.
+ */
+#if 0
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -42,21 +45,20 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-/* Definitions for defaultTask */
-/* osThreadId_t defaultTaskHandle; */
-/* const osThreadAttr_t defaultTask_attributes = { */
-/*     .name       = "defaultTask", */
-/*     .stack_size = 128 * 4, */
-/*     .priority   = (osPriority_t)osPriorityNormal, */
-/* }; */
-/* USER CODE BEGIN PV */
-/* void timer_callback(xTimerHandle) */
-/* { */
-/*     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13); */
-/* } */
+Definitions for defaultTask
+osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = {
+    .name       = "defaultTask",
+    .stack_size = 128 * 4,
+    .priority   = (osPriority_t)osPriorityNormal,
+};
+USER CODE BEGIN PV
+void timer_callback(xTimerHandle)
+{
+    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+}
 
-/* TimerHandle_t timer; */
-
+#endif
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -134,22 +136,17 @@ int main(void)
 
     /* USER CODE BEGIN RTOS_EVENTS */
     /* add events, ... */
-    extern void main_loop();
     /* USER CODE END RTOS_EVENTS */
 
     /* Start scheduler */
-    // osKernelStart();
-    /* timer = xTimerCreate("TestTimer", pdMS_TO_TICKS(200), pdTRUE, NULL, timer_callback); */
-    /* xTimerStart(timer, 0); */
-    /* vTaskStartScheduler(); */
-    extern void main_loop();
-    main_loop();
     /* We should never get here as control is now taken by the scheduler */
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
     while (1)
     {
         /* USER CODE END WHILE */
+        extern void main_loop();
+        main_loop();
 
         /* USER CODE BEGIN 3 */
     }
