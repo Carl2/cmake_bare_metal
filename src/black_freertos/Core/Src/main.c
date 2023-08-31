@@ -22,7 +22,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "FreeRTOS.h"
+#include "timers.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,11 +45,17 @@
 /* Definitions for defaultTask */
 /* osThreadId_t defaultTaskHandle; */
 /* const osThreadAttr_t defaultTask_attributes = { */
-/*   .name = "defaultTask", */
-/*   .stack_size = 128 * 4, */
-/*   .priority = (osPriority_t) osPriorityNormal, */
+/*     .name       = "defaultTask", */
+/*     .stack_size = 128 * 4, */
+/*     .priority   = (osPriority_t)osPriorityNormal, */
 /* }; */
 /* USER CODE BEGIN PV */
+void timer_callback(xTimerHandle)
+{
+    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+}
+
+TimerHandle_t timer;
 
 /* USER CODE END PV */
 
@@ -127,11 +134,14 @@ int main(void)
 
     /* USER CODE BEGIN RTOS_EVENTS */
     /* add events, ... */
+    extern main_loop();
     /* USER CODE END RTOS_EVENTS */
 
     /* Start scheduler */
     // osKernelStart();
-
+    timer = xTimerCreate("TestTimer", pdMS_TO_TICKS(200), pdTRUE, NULL, timer_callback);
+    xTimerStart(timer, 0);
+    vTaskStartScheduler();
     /* We should never get here as control is now taken by the scheduler */
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
@@ -236,31 +246,9 @@ void StartDefaultTask(void* argument)
     /* Infinite loop */
     for (;;)
     {
-        // osDelay(1);
+        osDelay(1);
     }
     /* USER CODE END 5 */
-}
-
-/**
- * @brief  Period elapsed callback in non blocking mode
- * @note   This function is called  when TIM1 interrupt took place, inside
- * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
- * a global variable "uwTick" used as application time base.
- * @param  htim : TIM handle
- * @retval None
- */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
-{
-    /* USER CODE BEGIN Callback 0 */
-
-    /* USER CODE END Callback 0 */
-    if (htim->Instance == TIM1)
-    {
-        HAL_IncTick();
-    }
-    /* USER CODE BEGIN Callback 1 */
-
-    /* USER CODE END Callback 1 */
 }
 
 /**

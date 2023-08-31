@@ -23,10 +23,10 @@ set(SRC
   Core/Src/stm32f4xx_hal_msp.c
   Core/Src/stm32f4xx_it.c
   Core/Src/system_stm32f4xx.c
-  #Core/Src/syscalls.c
-  #Core/Src/sysmem.c
+  Core/Src/syscalls.c
+  Core/Src/sysmem.c
   Core/Src/freertos.c
-  my_files/black_pill_main.cpp
+  proj_source/proj_loop.cpp
   )
 
 freertos_support(
