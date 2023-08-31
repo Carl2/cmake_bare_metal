@@ -22,8 +22,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "FreeRTOS.h"
-#include "timers.h"
+/* #include "FreeRTOS.h" */
+/* #include "timers.h" */
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,12 +50,12 @@
 /*     .priority   = (osPriority_t)osPriorityNormal, */
 /* }; */
 /* USER CODE BEGIN PV */
-void timer_callback(xTimerHandle)
-{
-    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-}
+/* void timer_callback(xTimerHandle) */
+/* { */
+/*     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13); */
+/* } */
 
-TimerHandle_t timer;
+/* TimerHandle_t timer; */
 
 /* USER CODE END PV */
 
@@ -134,14 +134,16 @@ int main(void)
 
     /* USER CODE BEGIN RTOS_EVENTS */
     /* add events, ... */
-    extern main_loop();
+    extern void main_loop();
     /* USER CODE END RTOS_EVENTS */
 
     /* Start scheduler */
     // osKernelStart();
-    timer = xTimerCreate("TestTimer", pdMS_TO_TICKS(200), pdTRUE, NULL, timer_callback);
-    xTimerStart(timer, 0);
-    vTaskStartScheduler();
+    /* timer = xTimerCreate("TestTimer", pdMS_TO_TICKS(200), pdTRUE, NULL, timer_callback); */
+    /* xTimerStart(timer, 0); */
+    /* vTaskStartScheduler(); */
+    extern void main_loop();
+    main_loop();
     /* We should never get here as control is now taken by the scheduler */
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
@@ -246,7 +248,7 @@ void StartDefaultTask(void* argument)
     /* Infinite loop */
     for (;;)
     {
-        osDelay(1);
+        // osDelay(1);
     }
     /* USER CODE END 5 */
 }
