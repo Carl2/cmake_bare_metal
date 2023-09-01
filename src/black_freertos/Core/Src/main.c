@@ -42,23 +42,22 @@
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
+// #if 0
+/* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart1;
 
-/* USER CODE BEGIN PM */
-#if 0
-/* USER CODE END PM */
-
 /* Definitions for defaultTask */
-osThreadId_t defaultTaskHandle;
-const osThreadAttr_t defaultTask_attributes = {
-  .name = "defaultTask",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
-};
+/* osThreadId_t defaultTaskHandle; */
+/* const osThreadAttr_t defaultTask_attributes = { */
+/*     .name       = "defaultTask", */
+/*     .stack_size = 128 * 4, */
+/*     .priority   = (osPriority_t)osPriorityNormal, */
+/* }; */
 /* USER CODE BEGIN PV */
-#endif
+// #endif
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -149,9 +148,10 @@ int main(void)
 #endif
     while (1)
     {
-        /* USER CODE END WHILE */
         extern void main_loop();
         main_loop();
+        /* USER CODE END WHILE */
+
         /* USER CODE BEGIN 3 */
     }
     /* USER CODE END 3 */
@@ -249,7 +249,7 @@ static void MX_GPIO_Init(void)
     /* GPIO Ports Clock Enable */
     __HAL_RCC_GPIOC_CLK_ENABLE();
     __HAL_RCC_GPIOH_CLK_ENABLE();
-    __HAL_RCC_GPIOB_CLK_ENABLE();
+    __HAL_RCC_GPIOA_CLK_ENABLE();
 
     /*Configure GPIO pin Output Level */
     HAL_GPIO_WritePin(LED_PIN_GPIO_Port, LED_PIN_Pin, GPIO_PIN_RESET);

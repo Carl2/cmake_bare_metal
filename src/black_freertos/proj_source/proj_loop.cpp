@@ -18,10 +18,11 @@ void vTask1([[maybe_unused]] void* pvParam)
     constexpr static std::string_view msg = "Hello from task1\n\r";
     while (true)
     {
+        uint8_t data[] = "HELLO WORLD \r\n";
         // do somehting useful
-        // HAL_UART_Transmit(&huart1, (unsigned char*)msg.data(), msg.size(), 100);
-        HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-        vTaskDelay(pdMS_TO_TICKS(200));
+        HAL_UART_Transmit(&huart1, data, sizeof(data), 100);
+        // HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
 
