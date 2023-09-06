@@ -16,6 +16,7 @@
  ******************************************************************************
  */
 #include "main.h"
+UART_HandleTypeDef huart1;
 #if 0
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
@@ -43,21 +44,21 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-// #if 0
+#if 0
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart1;
 
 /* Definitions for defaultTask */
-/* osThreadId_t defaultTaskHandle; */
-/* const osThreadAttr_t defaultTask_attributes = { */
-/*     .name       = "defaultTask", */
-/*     .stack_size = 128 * 4, */
-/*     .priority   = (osPriority_t)osPriorityNormal, */
-/* }; */
+osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = {
+    .name       = "defaultTask",
+    .stack_size = 128 * 4,
+    .priority   = (osPriority_t)osPriorityNormal,
+};
 /* USER CODE BEGIN PV */
-// #endif
+#endif
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -285,6 +286,28 @@ void StartDefaultTask(void* argument)
         // osDelay(1);
     }
     /* USER CODE END 5 */
+}
+
+/**
+ * @brief  Period elapsed callback in non blocking mode
+ * @note   This function is called  when TIM1 interrupt took place, inside
+ * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+ * a global variable "uwTick" used as application time base.
+ * @param  htim : TIM handle
+ * @retval None
+ */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
+{
+    /* USER CODE BEGIN Callback 0 */
+
+    /* USER CODE END Callback 0 */
+    if (htim->Instance == TIM1)
+    {
+        HAL_IncTick();
+    }
+    /* USER CODE BEGIN Callback 1 */
+
+    /* USER CODE END Callback 1 */
 }
 
 /**
