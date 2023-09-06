@@ -59,6 +59,8 @@ void xPortSysTickHandler(void);
 
 #define xPortSysTickHandler SysTick_Handler
 
+#define configUSE_TASK_NOTIFICATION 1
+
 #define configENABLE_FPU 0
 #define configENABLE_MPU 0
 
