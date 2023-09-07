@@ -65,6 +65,7 @@ void xPortSysTickHandler(void);
 #define configENABLE_MPU 0
 
 #define configUSE_PREEMPTION 1
+#define configUSE_TIME_SLICING 1
 #define configSUPPORT_STATIC_ALLOCATION 0
 #define configSUPPORT_DYNAMIC_ALLOCATION 1
 #define configUSE_IDLE_HOOK 0
