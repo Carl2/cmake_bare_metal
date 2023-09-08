@@ -1,6 +1,6 @@
 set(MCU_COMPILER_TYPE "cortex-m4")
 set(MCU_FLOAT True) # IF this is False, it will use soft instead
-set(MCU_COMPILER_FPU_DEV "fpv5-sp-d16")
+set(MCU_COMPILER_FPU_DEV "fpv4-sp-d16")
 set(MCU_COMPILER_INST_SET "-mthumb")
 
 set(MCU_DEF_MCU "STM32F401xC")
